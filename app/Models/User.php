@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -32,6 +33,21 @@ class User extends Authenticatable
     public function preferences(): HasOne
     {
         return $this->hasOne(UserPreference::class);
+    }
+
+    public function socialiteUsers(): HasMany
+    {
+        return $this->hasMany(SocialiteUser::class);
+    }
+
+    public function initials(): string
+    {
+        return (string) str($this->name)
+            ->explode(' ')
+            ->filter()
+            ->map(fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)))
+            ->take(2)
+            ->implode('');
     }
 
     public function avatarUrl(): ?string

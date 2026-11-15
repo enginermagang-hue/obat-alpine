@@ -38,7 +38,11 @@ Referensi skema: `D:\project\obat\docs\Struktur Database.md` — ini **sumber tu
 | Database dev | SQLite + WAL | ✅ 54 tabel, `migrate:fresh --seed` sukses, selisih skema 0 |
 | Database uji | SQLite `:memory:` | ✅ `phpunit.xml` force sqlite (2 test hijau) |
 | Seeder master | — | ✅ 9 user, 5 role, 128 permission, 6 faskes, 53 obat, 3 supplier, 12 sumber dana, 22 avatar |
-| Repo git | `main` | ✅ commit awal `13cf415` |
+| Auth | — | ✅ login/logout + throttle, Google OAuth (opsional) |
+| Layout & UI | — | ✅ sidebar/topbar, dark mode, toast, role-aware menu |
+| Halaman | — | ✅ dashboard (KPI) + profil & preferensi + ubah password |
+| Test | — | ✅ 12 test, 35 assertion (auth, dashboard, profil) |
+| Repo git | `main` | ✅ 4 commit, working tree bersih |
 | Filament | — | ✅ tidak terpasang |
 
 File yang sudah diubah:
@@ -324,8 +328,10 @@ Status paket per 16 Nov 2026:
 | --- | --- | --- |
 | `spatie/laravel-permission` | 8.5.0 | ✅ terpasang + migration terbit |
 | `spatie/laravel-activitylog` | 5.1.5 | ✅ terpasang + migration terbit |
-| `spatie/laravel-pdf`, `spatie/browsershot`, `dompdf/dompdf` | — | ⏳ Fase 1a (dibutuhkan cetak) |
-| `phpoffice/phpspreadsheet`, `laravel/socialite`, `spatie/laravel-backup` | — | ⏳ Fase 1a |
+| `laravel/socialite` | 5.32.0 | ✅ terpasang (Google link/login) |
+| `blade-ui-kit/blade-heroicons` | 2.7.0 | ✅ ikon UI (`<x-heroicon-o-* />`) |
+| `spatie/laravel-pdf`, `spatie/browsershot`, `dompdf/dompdf` | — | ⏳ Fase 6 (dibutuhkan cetak) |
+| `phpoffice/phpspreadsheet`, `spatie/laravel-backup` | — | ⏳ Fase 6 / Fase 1b |
 
 Versi acuan (dari `D:\project\obat\composer.json`): permission ^7.4, activitylog ^5.0, laravel-pdf ^2.8,
 browsershot *, dompdf ^3.1, phpspreadsheet ^5.8, socialite ^5.5, backup ^10.3.
@@ -375,39 +381,60 @@ di mesin dev & server (project lama sudah memakainya). `dompdf` disimpan sebagai
 ```js
 import './bootstrap';
 import Alpine from 'alpinejs';
-import docForm from './components/docForm';
-import tableFilter from './components/tableFilter';
-import chart from './components/chart';
 
-window.Alpine = Alpine;
-Alpine.data('docForm', docForm);
-Alpine.data('tableFilter', tableFilter);
-Alpine.data('chart', chart);
-Alpine.store('ui', { sidebarOpen: true, dark: false });
-Alpine.store('toast', { items: [], push(msg, type = 'success') { /* ... */ } });
+Alpine.store('ui', {
+    sidebarOpen: window.innerWidth >= 1024,
+    mobileOpen: false,
+    dark: localStorage.getItem('theme') === 'dark',
+    toggleSidebar() { /* desktop collapse / mobile drawer */ },
+    toggleDark() { /* class .dark + localStorage */ },
+});
+
+Alpine.store('toast', {
+    items: [],
+    push(message, type = 'success') { /* auto-dismiss 5s */ },
+    dismiss(id) { /* ... */ },
+});
+
+Alpine.data('dropdown', () => ({ open: false, toggle() {}, close() {} }));
 Alpine.start();
 ```
 
-`layouts/app.blade.php`: sidebar collapsible (role-aware menu), topbar (search, notifikasi, profil), flash message → toast, `@vite`.
+**Status implementasi:**
+
+- `resources/views/layouts/app.blade.php` — sidebar collapsible + varian **topbar**, menu role-aware
+  (`config/navigation.php`, item hanya muncul bila `Route::has()`), topbar (profil, dark toggle, logout),
+  toast, footer.
+- `resources/views/auth/login.blade.php` — panel branding + form validasi, show/hide password, remember.
+- `resources/views/dashboard.blade.php` — sapaan, 4 KPI (obat aktif, faskes, batch <90 hari, pemakaian bulan ini),
+  tabel batch mendekati kedaluwarsa, penerimaan terakhir, aktivitas terbaru.
+- `resources/views/profil/edit.blade.php` — nama, avatar (initials/DiceBear/preset) + preview live,
+  bahasa, posisi menu, sidebar, item/halaman, notifikasi, ubah password, link/unlink Google.
+- Tema: Tailwind 4 `@theme` brand/accent, dark mode class-based (`@custom-variant dark`), ikon Heroicons.
+- Timezone `Asia/Makassar`, tanggal berbahasa Indonesia (`Carbon::setLocale('id')`).
 
 ### 5.4 Auth & otorisasi
 
-- Port `CustomAuthController` (login/logout) + `login.blade.php`.
-- Port `GoogleSocialiteController` (opsional, `users.google_login_enabled`).
-- Seeder role: `super_admin`, `admin_gudang`, `admin_dinas`, `puskesmas`, `pustu` (sudah ada di `RoleAndPermissionSeeder`).
-- Middleware `role:` + `Gate::before` untuk `super_admin`.
-- Policy dipanggil di controller (`$this->authorize(...)`), bukan di UI.
+- ✅ `App\Http\Controllers\Auth\LoginController` (show/store/destroy) + `LoginRequest`, throttle 10/menit.
+- ✅ `Auth\GoogleController` + `App\Models\SocialiteUser` (tabel `socialite_users`); link/unlink dari halaman profil.
+  Nonaktif otomatis bila `GOOGLE_CLIENT_ID/SECRET` kosong.
+- ✅ `ProfilController` (update preferensi, ubah password, unlink Google) + `ProfilUpdateRequest`.
+- ✅ Middleware `SetLocaleFromPreferences` (bahasa per user) + `role:` dari spatie.
+- ✅ `Gate::before` untuk `super_admin` (semua ability lolos).
+- Policy dipanggil di controller (`$this->authorize(...)`), bukan di UI — menyusul saat modul tiba.
 - **Skema `users` tidak punya kolom `is_active`.** Kolom yang tersedia: `fasilitas_kesehatan_id`,
-  `google_login_enabled`, `last_active_at`, `email_verified_at`. Jadi aktivasi/nonaktivasi akun harus
-  lewat role/permission, bukan flag `is_active`.
-- Akun uji dibuat oleh `UserSeeder` / `E2eTestUserSeeder` — tidak ada user hasil clone.
+  `google_login_enabled`, `last_active_at`, `email_verified_at`. Aktivasi akun lewat role/permission.
+- Akun uji: `instalasifarmasi.kabkupang@gmail.com` / `user123` (super_admin), 9 user hasil `UserSeeder`.
+- Route: `login`, `login.post`, `logout`, `dashboard`, `profil.edit/update/password`, `google.redirect/callback/unlink`.
 
 ### Checklist
 
-- [ ] `php artisan serve` + login berhasil
-- [ ] Menu sidebar tampil sesuai role
-- [ ] `npm run dev` jalan, HMR aktif
-- [ ] `php artisan test` hijau (test dasar)
+- [x] `php artisan serve` + login berhasil (diuji HTTP: `/login` 200, login 302 → `/`, dashboard 200)
+- [x] Menu sidebar tampil sesuai role (`Route::has` + `hasAnyRole`, super_admin melihat semua)
+- [x] `npm run build` sukses; `npm run dev` (HMR) tersedia
+- [x] `php artisan test` hijau — 12 test, 35 assertion
+- [x] Dark mode + layout topbar/sidebar diverifikasi lewat browser (screenshot)
+- [ ] Cek visual halaman modul (menyusul Fase 2)
 
 ---
 
@@ -600,6 +627,6 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
 1. **Fase 0a** ✅: 45 migration file, SQLite dev (54 tabel, WAL), `migrate:fresh --seed` sukses.
 2. **Fase 0b** ✅: `.env` SQLite, `phpunit.xml` `:memory:`, `git init` + commit `13cf415`.
 3. **Fase 0c** ✅: spatie permission/activitylog terpasang & terbit, seeder master + akun jalan, `schema-diff` 0 selisih (sqlite & mysql).
-4. **Fase 1a**: layout & auth (`CustomAuthController` + login Blade), menu sidebar role-aware, halaman `/profil`.
-5. **Fase 1b**: copy Services (24, bersihkan `BuatPermintaanService` + `NotificationService`), Policies (24, 2 lepas Filament Pages), Commands (21), 10 controller cetak, `SimulasiDummyService:1520` → `strftime`, lalu dummy data untuk AI.
+4. **Fase 1a** ✅: layout + auth + dashboard + profil, menu role-aware, dark mode, 12 test hijau.
+5. **Fase 1b**: copy sisa Services (22), Policies (24), Commands (21), 10 controller cetak, perbaiki `SimulasiDummyService:1520`, lalu dummy data untuk AI.
 6. **Fase 2**: modul Obat sebagai pola acuan (list/filter/modal/import) sebelum modul lain.

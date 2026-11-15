@@ -56,7 +56,7 @@ class UserPreference extends Model
             'avatar_path' => null,
             'avatar_dicebear_style' => 'avataaars',
             'posisi_navbar' => 'sidebar',
-            'sidebar_collapsed' => true,
+            'sidebar_collapsed' => false,
             'bahasa' => 'id',
             'items_per_halaman' => 10,
             'notifikasi_email' => true,

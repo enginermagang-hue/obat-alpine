@@ -5,7 +5,57 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-brand-50: #eaf6fd;
+    --color-brand-100: #d0ebfa;
+    --color-brand-200: #a5d9f5;
+    --color-brand-300: #6cc1ed;
+    --color-brand-400: #2fa3e0;
+    --color-brand-500: #0083bf;
+    --color-brand-600: #016b9d;
+    --color-brand-700: #05577f;
+    --color-brand-800: #084969;
+    --color-brand-900: #0b3d58;
+    --color-brand-950: #072738;
+
+    --color-accent-300: #4fd1c5;
+    --color-accent-400: #14a89f;
+    --color-accent-500: #0d8f88;
+    --color-accent-600: #0d7773;
+    --color-accent-700: #0d625f;
+}
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-200;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+@layer utilities {
+    .scrollbar-thin {
+        scrollbar-width: thin;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        border-radius: 9999px;
+        background-color: rgb(148 163 184 / 0.5);
+    }
 }

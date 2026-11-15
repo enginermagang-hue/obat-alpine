@@ -1,7 +1,30 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfilController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+Route::middleware('guest')->group(function (): void {
+    Route::get('login', [LoginController::class, 'show'])->name('login');
+    Route::post('login', [LoginController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('login.post');
+});
+
+Route::post('logout', [LoginController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('logout');
+
+Route::middleware('auth')->group(function (): void {
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('profil', [ProfilController::class, 'edit'])->name('profil.edit');
+    Route::put('profil', [ProfilController::class, 'update'])->name('profil.update');
+    Route::put('profil/password', [ProfilController::class, 'updatePassword'])->name('profil.password');
+
+    Route::get('auth/google', [GoogleController::class, 'redirect'])->name('google.redirect');
+    Route::get('auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
+    Route::post('auth/google/unlink', [ProfilController::class, 'unlinkGoogle'])->name('google.unlink');
 });

@@ -58,6 +58,11 @@ class BatchStok extends Model
         return $this->belongsTo(PenerimaanStok::class, 'penerimaan_id');
     }
 
+    public function fasilitas(): BelongsTo
+    {
+        return $this->belongsTo(FasilitasKesehatan::class, 'fasilitas_id');
+    }
+
     /**
      * Recalculate stok_gudang.jumlah for the given obat from batch_stok.
      */
