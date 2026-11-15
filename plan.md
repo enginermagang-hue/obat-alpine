@@ -41,6 +41,9 @@ Referensi skema: `D:\project\obat\docs\Struktur Database.md` — ini **sumber tu
 | Auth | — | ✅ login/logout + throttle, Google OAuth (opsional) |
 | Layout & UI | — | ✅ sidebar/topbar, dark mode, toast, role-aware menu |
 | Halaman | — | ✅ dashboard (KPI) + profil & preferensi + ubah password |
+| Services / Policies | — | ✅ 24 service + 24 policy dicopy, Filament dibersihkan |
+| Console & Cetak | — | ✅ 21 command + scheduler, 10 controller cetak, 11 view PDF |
+| Data dummy | — | ✅ 12 bulan: 18.926 pemakaian, 72 distribusi, 35 penerimaan |
 | Test | — | ✅ 12 test, 35 assertion (auth, dashboard, profil) |
 | Repo git | `main` | ✅ 4 commit, working tree bersih |
 | Filament | — | ✅ tidak terpasang |
@@ -286,7 +289,8 @@ Satu tabel referensi tidak dibuat: `settings` (legacy, tidak dipakai kode) — d
 | `pengaturan_laporan` | dibuat `RoleAndPermissionSeeder` (9 baris) | ✅ |
 | Avatar | `AvatarPresetSeeder` (22 preset, butuh `public/assets/images/avatars`) | ✅ |
 | Akun login | `UserSeeder` (9 user, password `user123`, role terpasang) | ✅ |
-| Data transaksi untuk AI & laporan | `SimulasiTransaksiSeeder` + `GenerateDummyDataCommand` | ⏳ Fase 1b |
+| Data transaksi untuk AI & laporan | `dummy:generate` (bukan `SimulasiTransaksiSeeder` yang interaktif) | ✅ 12 bulan: 35 penerimaan, 72 distribusi, 18.926 pemakaian, 72 permintaan, 72 LPLPO, 6 RKO, 4 retur, 4.419 batch |
+| Model AI | `php artisan ai:train-models` | ✅ 318 model, 954 prediksi, 0 error (51 detik) |
 | Tanpa dummy | `AiTrainModels` berstatus `data_belum_cukup` — dashboard AI kosong | — |
 
 Model minimum yang sudah dicopy agar seeder jalan: 37 model + `Models/Traits/LogsActivity`, `Enums/MetodeStok`,
@@ -330,8 +334,15 @@ Status paket per 16 Nov 2026:
 | `spatie/laravel-activitylog` | 5.1.5 | ✅ terpasang + migration terbit |
 | `laravel/socialite` | 5.32.0 | ✅ terpasang (Google link/login) |
 | `blade-ui-kit/blade-heroicons` | 2.7.0 | ✅ ikon UI (`<x-heroicon-o-* />`) |
-| `spatie/laravel-pdf`, `spatie/browsershot`, `dompdf/dompdf` | — | ⏳ Fase 6 (dibutuhkan cetak) |
-| `phpoffice/phpspreadsheet`, `spatie/laravel-backup` | — | ⏳ Fase 6 / Fase 1b |
+| `spatie/laravel-pdf` | 2.14.0 | ✅ terpasang (cetak PDF via Browsershot) |
+| `spatie/browsershot` | 5.5.0 | ✅ terpasang (butuh Node + Chrome di mesin) |
+| `dompdf/dompdf` | 3.1.6 | ✅ terpasang (fallback PDF) |
+| `phpoffice/phpspreadsheet` | 5.11.0 | ✅ terpasang (export Excel) |
+| `league/csv` | 9.29.0 | ✅ terpasang (export CSV RKO) |
+| `spatie/laravel-backup` | 10.4.0 | ✅ terpasang + `config/backup.php` |
+
+Config yang sudah diterbitkan/dicopy: `config/permission.php`, `config/activitylog.php`, `config/backup.php`,
+`config/laravel-pdf.php`.
 
 Versi acuan (dari `D:\project\obat\composer.json`): permission ^7.4, activitylog ^5.0, laravel-pdf ^2.8,
 browsershot *, dompdf ^3.1, phpspreadsheet ^5.8, socialite ^5.5, backup ^10.3.
@@ -359,16 +370,16 @@ di mesin dev & server (project lama sudah memakainya). `dompdf` disimpan sebagai
 | Sumber | Aksi |
 | --- | --- |
 | `app/Models` (37 model + `Traits/LogsActivity.php`) | ✅ **sudah dicopy** di Fase 0c (agar seeder jalan); `User.php` dibersihkan dari Filament (`HasAvatar` → `avatarUrl()`) |
-| `app/Services` (24: 20 root + `Ann/` 3 + `Laporan/` 1) | baru `ActivityLogService` + `NomorFormatService` (dibutuhkan seeder); 22 sisanya di Fase 1b — bersihkan Filament dari **`BuatPermintaanService`** & **`NotificationService`**; `StokService`/`FefoService` sudah bersih |
-| `app/Policies` (24) | copy di Fase 1b; hanya **`ModelPrediksiPolicy`** & **`PrediksiKebutuhanPolicy`** yang import `App\Filament\Pages\PrediksiAiPage` |
+| `app/Services` (24: 20 root + `Ann/` 3 + `Laporan/` 1) | ✅ **semua dicopy**; `BuatPermintaanService` diubah ke flash session, `NotificationService` ditulis ulang memakai `App\Notifications\AppNotification` (Laravel database notification). `StokService`/`FefoService` memang sudah bersih |
+| `app/Policies` (24) | ✅ semua dicopy; `ModelPrediksiPolicy` & `PrediksiKebutuhanPolicy` memakai `App\Support\FaskesAccess::visibleFasilitasIds()` (pengganti `Filament\Pages\PrediksiAiPage`) |
 | `app/Enums` (1), `app/Helpers` (1) | ✅ sudah dicopy (`MetodeStok`, `BatchNumberGenerator`) |
-| `app/Support` | **tidak dibawa** — isinya hanya `ModalRepeaterColumn.php` (murni `filament-modal-repeater`) |
-| `app/Http/Controllers` cetak/auth | copy 10 controller `Cetak*` + `CustomAuthController`, `GoogleSocialiteController`, `PanduanController`, `DownloadSuratPermintaanController`; semua flat, susun ulang ke subfolder §3 |
-| `app/Console/Commands` (21) | copy (AI train, 6 command tutup buku, stok minimum, cleanup, docs, dll.) |
-| `routes/console.php` | copy scheduler (AiTrainModels weekly, stok minimum monthly, backup:clean/run) |
-| `resources/views/pdf/*` (8) | copy; cek dependency `spatie/laravel-pdf` |
+| `app/Support` | ditulis baru: `FaskesAccess` (batas faskes/pustu); `ModalRepeaterColumn.php` Filament **tidak** dibawa |
+| `app/Http/Controllers` cetak/auth | ✅ 10 controller `Cetak*` + `DownloadSuratPermintaanController` + controller auth; `PanduanController` menyusul bersama view panduan |
+| `app/Console/Commands` (21) | ✅ semua dicopy (AI train, 6 command tutup buku, stok minimum, cleanup, docs, dll.) |
+| `routes/console.php` | ✅ scheduler dipasang: AI train (mingguan), stok minimum (bulanan), backup harian, pengingat + auto tutup buku |
+| `resources/views/pdf/*` | ✅ 11 file (8 template + `kop-surat`, `tanda-tangan`, `info-table`) |
 | `database/migrations` (96 lama) | **tidak disalin**; jadi referensi penulisan 38 migrasi domain baru (§4.3) |
-| `database/seeders` (11), `factories` | copy selektif — utamakan `RoleAndPermissionSeeder`, `FaskesSeeder`, `SumberDanaSeeder`, `SupplierSeeder` |
+| `database/seeders` (11), `factories` | ✅ seeder master dipakai; `SimulasiTransaksiSeeder` (interaktif) tidak dipakai — diganti `dummy:generate` |
 | `app/Filament` (23 Resource, 182 file), `app/Livewire` (1) | **tidak dipakai** → jadikan checklist paritas §14 |
 
 > Seed `RoleAndPermissionSeeder` sudah berisi 5 role (`super_admin`, `admin_gudang`, `admin_dinas`,
@@ -613,7 +624,7 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
 | Drift skema migration vs Model/Service lama | `php database/schema-diff.php` wajib 0 selisih **sebelum** copy Models/Services; `obat` read-only sebagai referensi |
 | Beda perilaku SQLite vs MySQL | (a) `useCurrentOnUpdate()` diabaikan → `updated_at` tidak auto-bump pada `DB::table()->update()`; (b) `decimal` jadi floating point → jangan assert uang persis; (c) tidak ada row lock (`lockForUpdate` no-op). Mitigasi: enum/index/FK tetap diverifikasi `schema-diff`, dan uji akhir tetap di MySQL |
 | `database is locked` (SQLite) | WAL + `busy_timeout=5000` sudah aktif di `config/database.php`; hindari menjalankan dua proses tulis berat bersamaan |
-| Raw SQL MySQL-only di service lama | Terverifikasi hanya 3 tempat, dan 3 sudah punya cabang driver. Sisa 1: `SimulasiDummyService:1520` (`DATE_FORMAT(tanggal, '%Y-%m')`) → ganti `strftime('%Y-%m', tanggal)` saat copy |
+| Raw SQL MySQL-only di service lama | ✅ Terverifikasi: 3 tempat punya cabang driver, dan `SimulasiDummyService:1520` (`DATE_FORMAT`) sudah diperbaiki memakai `strftime` saat di SQLite |
 | Token GitHub Composer invalid (401) | Mirror global Tencent sudah terpasang (`repositories.0` = mirrors.tencent.com/composer); perbarui token agar kembali ke Packagist resmi |
 | Cetak PDF butuh Node/Puppeteer | `browsershot` sudah dipakai project lama, tapi pastikan Node+Chrome ada di mesin/server baru; `dompdf` sebagai fallback |
 | Dua salinan `Struktur Database.md` | Ada di `D:\project\obat\docs\` **dan** root project baru → jadikan `docs/` sumber tunggal, hapus salinan root agar tidak drift |
@@ -628,5 +639,5 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
 2. **Fase 0b** ✅: `.env` SQLite, `phpunit.xml` `:memory:`, `git init` + commit `13cf415`.
 3. **Fase 0c** ✅: spatie permission/activitylog terpasang & terbit, seeder master + akun jalan, `schema-diff` 0 selisih (sqlite & mysql).
 4. **Fase 1a** ✅: layout + auth + dashboard + profil, menu role-aware, dark mode, 12 test hijau.
-5. **Fase 1b**: copy sisa Services (22), Policies (24), Commands (21), 10 controller cetak, perbaiki `SimulasiDummyService:1520`, lalu dummy data untuk AI.
+5. **Fase 1b** ✅: 24 service + 24 policy + 21 command + 10 controller cetak dicopy, Filament dibersihkan, data dummy 12 bulan + 318 model AI terlatih.
 6. **Fase 2**: modul Obat sebagai pola acuan (list/filter/modal/import) sebelum modul lain.
