@@ -34,10 +34,11 @@ Referensi skema: `D:\project\obat\docs\Struktur Database.md` — ini **sumber tu
 | Vite | 7.3.8 | ✅ `npm run build` sukses |
 | Git | — | ❌ belum `git init` |
 | Paket Composer pendukung | — | ❌ belum ada (lihat §5.1) |
-| Skema migration | — | ✅ 43 file (skeleton disesuaikan + 38 domain + FK + notifications) |
-| Database dev | SQLite + WAL | ✅ 48 tabel, `migrate` sukses, selisih skema 0 |
+| Skema migration | — | ✅ 45 file (43 domain/sistem + 2 dari package spatie) |
+| Database dev | SQLite + WAL | ✅ 54 tabel, `migrate:fresh --seed` sukses, selisih skema 0 |
 | Database uji | SQLite `:memory:` | ✅ `phpunit.xml` force sqlite (2 test hijau) |
-| Seeder master + user | — | ❌ belum dipasang |
+| Seeder master | — | ✅ 9 user, 5 role, 128 permission, 6 faskes, 53 obat, 3 supplier, 22 avatar |
+| Repo git | `main` | ✅ commit awal `13cf415` |
 | Filament | — | ✅ tidak terpasang |
 
 File yang sudah diubah:
@@ -51,7 +52,7 @@ window.Alpine = Alpine;
 Alpine.start();
 ```
 
-Belum dikerjakan: publish migration package (spatie), seeder, `git init`, auth, layout, seluruh modul.
+Belum dikerjakan: auth & layout, seluruh modul, sisa paket Composer (§5.1), konversi test ke Pest.
 
 ### 2.1 Referensi skema (dibaca dari DB `obat`, read-only)
 
@@ -149,8 +150,8 @@ lalu dibangun ulang dari `database/migrations`.
 | Kelompok | Jumlah | Sumber migration |
 | --- | --- | --- |
 | Laravel core | 9 | skeleton: `users` (+`fasilitas_kesehatan_id`, `google_login_enabled`, `last_active_at`), `password_reset_tokens`, `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `notifications` |
-| Spatie permission | 5 | publish `spatie/laravel-permission` |
-| Spatie activitylog | 1 | publish `spatie/laravel-activitylog` (`activity_log`) |
+| Spatie permission | 5 | `vendor:publish spatie/laravel-permission` (v8.5) — sudah terbit: `2026_11_15_161400_create_permission_tables.php` |
+| Spatie activitylog | 1 | `vendor:publish spatie/laravel-activitylog` (v5.1) — sudah terbit: `2026_11_15_161400_create_activity_log_table.php` |
 | `settings` | 1 | **tidak dibuat** — tabel package `spatie/laravel-settings`, tidak ada referensi di `app/` maupun `config/` project lama |
 | `migrations` | 1 | otomatis oleh `php artisan migrate` |
 | **Domain obat** | **38** | **migration file baru** |
@@ -171,11 +172,10 @@ Yang **tidak** dibuat: view `stock_summary_view`, index duplikat `idx_pemakaian_
 `laporan_lplpo.jenis_pengajuan`, tabel `settings`, dan 4 tabel yatim project lama (`failed_import_rows`,
 `import_data_historis`, `pengaturan_laporan_new`, `pengaturan_laporan_old`).
 
-**Status implementasi (16 Nov 2026):** 43 file migration (3 skeleton disesuaikan + 38 create domain + 1 FK +
-1 notifications) sudah ada. Di **SQLite dev** hasilnya **48 tabel** dan di MySQL `obat_v2` juga **48 tabel**;
-selisih kolom/index/FK **0 di kedua mode** (`php database/schema-diff.php [--target=mysql]`). Sisa 6 tabel
-(`permissions`, `roles`, `model_has_permissions`, `model_has_roles`, `role_has_permissions`, `activity_log`)
-menunggu package dipasang + `vendor:publish` di Fase 1.
+**Status implementasi (16 Nov 2026):** 45 file migration (3 skeleton disesuaikan + 38 create domain + 1 FK +
+1 notifications + 2 package spatie) sudah ada. Di **SQLite dev** maupun **MySQL `obat_v2`** hasilnya
+**54 tabel**, selisih kolom/index/FK **0 di kedua mode** (`php database/schema-diff.php [--target=mysql]`).
+Yang tidak dibuat: `settings` (legacy, tidak dipakai kode) — sudah di-whitelist di verifier.
 
 ### 4.2 Langkah
 
@@ -268,35 +268,40 @@ tabel `settings`.
 
 | Mode | Tabel | Selisih | Exit |
 | --- | --- | --- | --- |
-| `--target=sqlite` | 48 / 55 | 0 | 0 |
-| `--target=mysql` | 48 / 55 | 0 | 0 |
+| `--target=sqlite` | 54 / 55 | 0 | 0 |
+| `--target=mysql` | 54 / 55 | 0 | 0 |
 
-Tabel tersisa yang dilaporkan: `permissions`, `roles`, `model_has_permissions`, `model_has_roles`,
-`role_has_permissions`, `activity_log` (menunggu package).
+Satu tabel referensi tidak dibuat: `settings` (legacy, tidak dipakai kode) — di-whitelist.
 
 ### 4.5 Seeding (karena DB kosong)
 
-| Kebutuhan | Seeder |
-| --- | --- |
-| 5 role + permission | `RoleAndPermissionSeeder` |
-| Master data | `FaskesSeeder`, `ObatSeeder`, `SumberDanaSeeder`, `SupplierSeeder` |
-| Akun login | `UserSeeder` / `E2eTestUserSeeder` |
-| Data transaksi untuk AI & laporan | `SimulasiTransaksiSeeder` + `GenerateDummyDataCommand` |
-| Tanpa dummy | `AiTrainModels` berstatus `data_belum_cukup` — dashboard AI kosong |
+| Kebutuhan | Seeder | Status |
+| --- | --- | --- |
+| 5 role + 128 permission | `RoleAndPermissionSeeder` | ✅ |
+| Master data | `FaskesSeeder` (6), `ObatSeeder` (53), `SupplierSeeder` (3) | ✅ |
+| `pengaturan_laporan` | dibuat `RoleAndPermissionSeeder` (9 baris) | ✅ |
+| Avatar | `AvatarPresetSeeder` (22 preset, butuh `public/assets/images/avatars`) | ✅ |
+| Akun login | `UserSeeder` (9 user, password `user123`, role terpasang) | ✅ |
+| Data transaksi untuk AI & laporan | `SimulasiTransaksiSeeder` + `GenerateDummyDataCommand` | ⏳ Fase 1b |
+| Tanpa dummy | `AiTrainModels` berstatus `data_belum_cukup` — dashboard AI kosong | — |
+
+Model minimum yang sudah dicopy agar seeder jalan: 37 model + `Models/Traits/LogsActivity`, `Enums/MetodeStok`,
+`Helpers/BatchNumberGenerator`, `Services/ActivityLogService`, `Services/NomorFormatService`.
+`app/Models/User.php` sudah dibersihkan dari Filament (`HasAvatar` → method `avatarUrl()`).
 
 ### Checklist
 
 - [x] SQLite dev dibuat (`database/database.sqlite`), `.env` menunjuk ke sana, WAL + `busy_timeout` aktif
-- [x] 10 migrasi sistem + 38 migrasi domain ada, tanpa error FK
-- [x] `php artisan migrate:fresh` sukses (skema reproducible)
-- [x] `php database/schema-diff.php` → 48 tabel, 0 selisih, exit 0 (mode sqlite)
-- [x] `php database/schema-diff.php --target=mysql` → 0 selisih (mode mysql)
-- [x] `phpunit.xml` force `sqlite :memory:`, `php artisan test` hijau
-- [ ] `vendor:publish` spatie permission + activitylog → 54 tabel
-- [ ] `php artisan db:seed` (master + role + akun) berhasil
-- [ ] Model inti bisa query: `Obat`, `FasilitasKesehatan`, `BatchStok`, `PemakaianObat`, `User`
-- [ ] Login dengan akun hasil seeder berhasil
-- [ ] `git init` + commit awal ada
+- [x] 10 migrasi sistem + 38 migrasi domain + 2 package spatie, tanpa error FK
+- [x] `php artisan migrate:fresh --seed` sukses (skema + data reproducible)
+- [x] `php database/schema-diff.php` → 54 tabel, 0 selisih, exit 0 (mode sqlite)
+- [x] `php database/schema-diff.php --target=mysql` → 54 tabel, 0 selisih, exit 0 (mode mysql)
+- [x] `phpunit.xml` force `sqlite :memory:`, `php artisan test` hijau (2 test)
+- [x] `php artisan db:seed` berhasil: 9 user, 5 role, 128 permission, 6 faskes, 53 obat, 3 supplier, 22 avatar
+- [x] Model inti bisa query: `Obat`, `FasilitasKesehatan`, `BatchStok`, `PemakaianObat`, `User`
+- [x] Hash password akun seeder valid (`Hash::check('user123', ...)` = OK) + role `super_admin` menempel
+- [x] `git init` + commit awal (`13cf415`), `vendor/bin/pint` bersih
+- [ ] Login lewat halaman web (butuh route + layout di Fase 1a)
 
 > **Catatan:** DB dev tidak berisi data produksi, jadi `migrate:fresh` adalah alur normal (bukan pantangan).
 > `obat` tetap tidak boleh diubah — perlakukan sebagai read-only reference.
@@ -312,6 +317,15 @@ composer require spatie/laravel-permission spatie/laravel-activitylog `
   spatie/laravel-pdf spatie/browsershot dompdf/dompdf `
   phpoffice/phpspreadsheet laravel/socialite spatie/laravel-backup
 ```
+
+Status paket per 16 Nov 2026:
+
+| Paket | Versi | Status |
+| --- | --- | --- |
+| `spatie/laravel-permission` | 8.5.0 | ✅ terpasang + migration terbit |
+| `spatie/laravel-activitylog` | 5.1.5 | ✅ terpasang + migration terbit |
+| `spatie/laravel-pdf`, `spatie/browsershot`, `dompdf/dompdf` | — | ⏳ Fase 1a (dibutuhkan cetak) |
+| `phpoffice/phpspreadsheet`, `laravel/socialite`, `spatie/laravel-backup` | — | ⏳ Fase 1a |
 
 Versi acuan (dari `D:\project\obat\composer.json`): permission ^7.4, activitylog ^5.0, laravel-pdf ^2.8,
 browsershot *, dompdf ^3.1, phpspreadsheet ^5.8, socialite ^5.5, backup ^10.3.
@@ -338,10 +352,10 @@ di mesin dev & server (project lama sudah memakainya). `dompdf` disimpan sebagai
 
 | Sumber | Aksi |
 | --- | --- |
-| `app/Models` (37 model + `Traits/LogsActivity.php`) | copy; `User.php` satu-satunya yang implement Filament (`HasAvatar`) → buang method `getFilamentAvatarUrl()` |
-| `app/Services` (24: 20 root + `Ann/` 3 + `Laporan/` 1) | copy; bersihkan Filament dari **`BuatPermintaanService`** & **`NotificationService`** (`Filament\Actions\Action`, `Filament\Notifications\Notification`). `StokService`/`FefoService` sudah bersih (0 referensi) |
-| `app/Policies` (24) | copy; hanya **`ModelPrediksiPolicy`** & **`PrediksiKebutuhanPolicy`** yang import `App\Filament\Pages\PrediksiAiPage` → ganti ke permission/route sendiri |
-| `app/Enums` (1), `app/Helpers` (1) | copy (`MetodeStok`, `BatchNumberGenerator`) |
+| `app/Models` (37 model + `Traits/LogsActivity.php`) | ✅ **sudah dicopy** di Fase 0c (agar seeder jalan); `User.php` dibersihkan dari Filament (`HasAvatar` → `avatarUrl()`) |
+| `app/Services` (24: 20 root + `Ann/` 3 + `Laporan/` 1) | baru `ActivityLogService` + `NomorFormatService` (dibutuhkan seeder); 22 sisanya di Fase 1b — bersihkan Filament dari **`BuatPermintaanService`** & **`NotificationService`**; `StokService`/`FefoService` sudah bersih |
+| `app/Policies` (24) | copy di Fase 1b; hanya **`ModelPrediksiPolicy`** & **`PrediksiKebutuhanPolicy`** yang import `App\Filament\Pages\PrediksiAiPage` |
+| `app/Enums` (1), `app/Helpers` (1) | ✅ sudah dicopy (`MetodeStok`, `BatchNumberGenerator`) |
 | `app/Support` | **tidak dibawa** — isinya hanya `ModalRepeaterColumn.php` (murni `filament-modal-repeater`) |
 | `app/Http/Controllers` cetak/auth | copy 10 controller `Cetak*` + `CustomAuthController`, `GoogleSocialiteController`, `PanduanController`, `DownloadSuratPermintaanController`; semua flat, susun ulang ke subfolder §3 |
 | `app/Console/Commands` (21) | copy (AI train, 6 command tutup buku, stok minimum, cleanup, docs, dll.) |
@@ -583,9 +597,9 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
 
 ## 16. Langkah berikutnya (urut)
 
-1. **Fase 0a** ✅: 43 migration file + `migrate` di SQLite (48 tabel, WAL aktif) + `schema-diff` 0 selisih.
-2. **Fase 0b**: `git init` + commit awal; `.env` sudah ke SQLite (`database/database.sqlite`), `phpunit.xml` sudah `:memory:`.
-3. **Fase 0c**: install paket → `vendor:publish` spatie permission/activitylog (6 tabel) → `db:seed` master + akun → `schema-diff` final 0 selisih (sqlite & mysql).
-4. **Fase 1a**: install paket Composer (+ putuskan Pest/PHPUnit) + layout & auth + seeder role.
-5. **Fase 1b**: copy Models (37) / Services (24) / Policies (24) / Commands (21) / 10 controller cetak, bersihkan 5 titik Filament (`User`, `BuatPermintaanService`, `NotificationService`, `ModelPrediksiPolicy`, `PrediksiKebutuhanPolicy`), perbaiki `SimulasiDummyService:1520`, lalu smoke test login.
+1. **Fase 0a** ✅: 45 migration file, SQLite dev (54 tabel, WAL), `migrate:fresh --seed` sukses.
+2. **Fase 0b** ✅: `.env` SQLite, `phpunit.xml` `:memory:`, `git init` + commit `13cf415`.
+3. **Fase 0c** ✅: spatie permission/activitylog terpasang & terbit, seeder master + akun jalan, `schema-diff` 0 selisih (sqlite & mysql).
+4. **Fase 1a**: layout & auth (`CustomAuthController` + login Blade), menu sidebar role-aware, halaman `/profil`.
+5. **Fase 1b**: copy Services (24, bersihkan `BuatPermintaanService` + `NotificationService`), Policies (24, 2 lepas Filament Pages), Commands (21), 10 controller cetak, `SimulasiDummyService:1520` → `strftime`, lalu dummy data untuk AI.
 6. **Fase 2**: modul Obat sebagai pola acuan (list/filter/modal/import) sebelum modul lain.

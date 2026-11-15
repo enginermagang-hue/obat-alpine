@@ -20,10 +20,9 @@ declare(strict_types=1);
  * - `RESTRICT` dan `NO ACTION` dianggap sama.
  * - Index pendamping FK (`*_foreign`) di MySQL tidak ada padanannya di SQLite -> diabaikan.
  */
-
 $refDb = 'obat';
 $target = 'sqlite';
-$sqlitePath = __DIR__ . '/database.sqlite';
+$sqlitePath = __DIR__.'/database.sqlite';
 $newDb = 'obat_v2';
 
 $positional = [];
@@ -58,7 +57,7 @@ $pdoOptions = [
 
 $ref = new PDO("mysql:host={$host};port={$port};charset=utf8mb4", $user, $pass, $pdoOptions);
 $targetPdo = $target === 'sqlite'
-    ? new PDO('sqlite:' . $sqlitePath, null, null, $pdoOptions)
+    ? new PDO('sqlite:'.$sqlitePath, null, null, $pdoOptions)
     : new PDO("mysql:host={$host};port={$port};charset=utf8mb4", $user, $pass, $pdoOptions);
 
 /**
@@ -174,35 +173,35 @@ function normalizeSqliteType(string $declared): string
 
 // ---------------------------------------------------------------- referensi MySQL
 
-$refTables = array_column(rows($ref, "select table_name from information_schema.tables
-    where table_schema = " . $ref->quote($refDb) . " and table_type = 'BASE TABLE' order by table_name"), 'table_name');
+$refTables = array_column(rows($ref, 'select table_name from information_schema.tables
+    where table_schema = '.$ref->quote($refDb)." and table_type = 'BASE TABLE' order by table_name"), 'table_name');
 
 $refColumns = [];
 foreach (rows($ref, 'select table_name, column_name, column_type, is_nullable, column_default, extra
-        from information_schema.columns where table_schema = ' . $ref->quote($refDb)) as $r) {
-    $refColumns[$r['table_name'] . '.' . $r['column_name']] = $r;
+        from information_schema.columns where table_schema = '.$ref->quote($refDb)) as $r) {
+    $refColumns[$r['table_name'].'.'.$r['column_name']] = $r;
 }
 
 $refIndexes = [];
-foreach (rows($ref, "select table_name, index_name, non_unique, seq_in_index, column_name
-        from information_schema.statistics where table_schema = " . $ref->quote($refDb) . '
+foreach (rows($ref, 'select table_name, index_name, non_unique, seq_in_index, column_name
+        from information_schema.statistics where table_schema = '.$ref->quote($refDb).'
         order by table_name, index_name, seq_in_index') as $r) {
-    $key = $r['table_name'] . '.' . $r['index_name'];
+    $key = $r['table_name'].'.'.$r['index_name'];
     $refIndexes[$key]['table'] = $r['table_name'];
     $refIndexes[$key]['unique'] = (int) $r['non_unique'] === 0;
     $refIndexes[$key]['columns'][] = $r['column_name'];
 }
 
 $refFks = [];
-foreach (rows($ref, "select k.table_name, k.constraint_name, k.column_name, k.referenced_table_name,
+foreach (rows($ref, 'select k.table_name, k.constraint_name, k.column_name, k.referenced_table_name,
         k.referenced_column_name, r.update_rule, r.delete_rule
         from information_schema.key_column_usage k
         join information_schema.referential_constraints r
           on r.constraint_schema = k.constraint_schema and r.constraint_name = k.constraint_name
-        where k.table_schema = " . $ref->quote($refDb) . '
+        where k.table_schema = '.$ref->quote($refDb).'
           and k.referenced_table_name is not null
         order by k.table_name, k.constraint_name, k.ordinal_position') as $r) {
-    $key = $r['table_name'] . '.' . $r['constraint_name'];
+    $key = $r['table_name'].'.'.$r['constraint_name'];
     $refFks[$key]['table'] = $r['table_name'];
     $refFks[$key]['columns'][] = $r['column_name'];
     $refFks[$key]['ref_table'] = $r['referenced_table_name'];
@@ -226,10 +225,10 @@ if ($target === 'sqlite') {
     $newFks = [];
 
     foreach ($newTables as $table) {
-        $quoted = '"' . str_replace('"', '""', $table) . '"';
+        $quoted = '"'.str_replace('"', '""', $table).'"';
 
-        foreach (rows($targetPdo, 'PRAGMA table_info(' . $quoted . ')') as $r) {
-            $newColumns[$table . '.' . $r['name']] = [
+        foreach (rows($targetPdo, 'PRAGMA table_info('.$quoted.')') as $r) {
+            $newColumns[$table.'.'.$r['name']] = [
                 'table' => $table,
                 'type' => normalizeSqliteType((string) $r['type']),
                 'notnull' => (int) $r['notnull'] === 1,
@@ -238,24 +237,24 @@ if ($target === 'sqlite') {
             ];
         }
 
-        foreach (rows($targetPdo, 'PRAGMA index_list(' . $quoted . ')') as $idx) {
+        foreach (rows($targetPdo, 'PRAGMA index_list('.$quoted.')') as $idx) {
             $name = (string) $idx['name'];
             if (str_starts_with($name, 'sqlite_autoindex_') || (string) $idx['origin'] !== 'c') {
                 continue;
             }
-            $key = $table . '.' . $name;
+            $key = $table.'.'.$name;
             $newIndexes[$key] = [
                 'table' => $table,
                 'unique' => (int) $idx['unique'] === 1,
                 'columns' => array_column(
-                    rows($targetPdo, 'PRAGMA index_info(' . '"' . str_replace('"', '""', $name) . '"' . ')'),
+                    rows($targetPdo, 'PRAGMA index_info('.'"'.str_replace('"', '""', $name).'"'.')'),
                     'name'
                 ),
             ];
         }
 
         $grouped = [];
-        foreach (rows($targetPdo, 'PRAGMA foreign_key_list(' . $quoted . ')') as $fk) {
+        foreach (rows($targetPdo, 'PRAGMA foreign_key_list('.$quoted.')') as $fk) {
             $grouped[$fk['id']]['table'] = $table;
             $grouped[$fk['id']]['columns'][] = $fk['from'];
             $grouped[$fk['id']]['ref_table'] = $fk['table'];
@@ -264,40 +263,40 @@ if ($target === 'sqlite') {
             $grouped[$fk['id']]['on_delete'] = $fk['on_delete'];
         }
         foreach ($grouped as $id => $fk) {
-            $newFks[$table . '#' . $id] = $fk;
+            $newFks[$table.'#'.$id] = $fk;
         }
     }
 } else {
-    $newTables = array_column(rows($targetPdo, "select table_name from information_schema.tables
-        where table_schema = " . $targetPdo->quote($newDb) . " and table_type = 'BASE TABLE' order by table_name"), 'table_name');
+    $newTables = array_column(rows($targetPdo, 'select table_name from information_schema.tables
+        where table_schema = '.$targetPdo->quote($newDb)." and table_type = 'BASE TABLE' order by table_name"), 'table_name');
 
     $newColumns = [];
     foreach (rows($targetPdo, 'select table_name, column_name, column_type, is_nullable, column_default, extra
-            from information_schema.columns where table_schema = ' . $targetPdo->quote($newDb)) as $r) {
+            from information_schema.columns where table_schema = '.$targetPdo->quote($newDb)) as $r) {
         $r['table'] = $r['table_name'];
-        $newColumns[$r['table_name'] . '.' . $r['column_name']] = $r;
+        $newColumns[$r['table_name'].'.'.$r['column_name']] = $r;
     }
 
     $newIndexes = [];
-    foreach (rows($targetPdo, "select table_name, index_name, non_unique, seq_in_index, column_name
-            from information_schema.statistics where table_schema = " . $targetPdo->quote($newDb) . '
+    foreach (rows($targetPdo, 'select table_name, index_name, non_unique, seq_in_index, column_name
+            from information_schema.statistics where table_schema = '.$targetPdo->quote($newDb).'
             order by table_name, index_name, seq_in_index') as $r) {
-        $key = $r['table_name'] . '.' . $r['index_name'];
+        $key = $r['table_name'].'.'.$r['index_name'];
         $newIndexes[$key]['table'] = $r['table_name'];
         $newIndexes[$key]['unique'] = (int) $r['non_unique'] === 0;
         $newIndexes[$key]['columns'][] = $r['column_name'];
     }
 
     $newFks = [];
-    foreach (rows($targetPdo, "select k.table_name, k.constraint_name, k.column_name, k.referenced_table_name,
+    foreach (rows($targetPdo, 'select k.table_name, k.constraint_name, k.column_name, k.referenced_table_name,
             k.referenced_column_name, r.update_rule, r.delete_rule
             from information_schema.key_column_usage k
             join information_schema.referential_constraints r
               on r.constraint_schema = k.constraint_schema and r.constraint_name = k.constraint_name
-            where k.table_schema = " . $targetPdo->quote($newDb) . '
+            where k.table_schema = '.$targetPdo->quote($newDb).'
               and k.referenced_table_name is not null
             order by k.table_name, k.constraint_name, k.ordinal_position') as $r) {
-        $key = $r['table_name'] . '.' . $r['constraint_name'];
+        $key = $r['table_name'].'.'.$r['constraint_name'];
         $newFks[$key]['table'] = $r['table_name'];
         $newFks[$key]['columns'][] = $r['column_name'];
         $newFks[$key]['ref_table'] = $r['referenced_table_name'];
@@ -328,32 +327,32 @@ foreach ($newTables as $table) {
             $expectedType = expectedSqliteType($refCol['column_type']);
             if ($expectedType !== $col['type']) {
                 $diffs[] = "KOLOM TIPE    {$key}: ref={$refCol['column_type']} -> sqlite:{$expectedType}"
-                    . " vs new:{$col['type']}";
+                    ." vs new:{$col['type']}";
             }
             $expectedNotNull = $refCol['is_nullable'] === 'NO';
             if ($expectedNotNull !== $col['notnull']) {
-                $diffs[] = "KOLOM NULL    {$key}: ref notnull=" . (int) $expectedNotNull
-                    . ' vs new=' . (int) $col['notnull'];
+                $diffs[] = "KOLOM NULL    {$key}: ref notnull=".(int) $expectedNotNull
+                    .' vs new='.(int) $col['notnull'];
             }
             $refDefault = normalizeDefault($refCol['column_default'] === null ? null : (string) $refCol['column_default']);
             if ($refDefault !== $col['default']) {
-                $diffs[] = "KOLOM DEFAULT {$key}: ref=" . var_export($refDefault, true)
-                    . ' vs new=' . var_export($col['default'], true);
+                $diffs[] = "KOLOM DEFAULT {$key}: ref=".var_export($refDefault, true)
+                    .' vs new='.var_export($col['default'], true);
             }
             $isPk = false;
             foreach ($refIndexes as $idxKey => $idx) {
-                if ($idxKey === $table . '.PRIMARY' && in_array($refCol['column_name'], $idx['columns'], true)) {
+                if ($idxKey === $table.'.PRIMARY' && in_array($refCol['column_name'], $idx['columns'], true)) {
                     $isPk = true;
                 }
             }
             if ($isPk !== ($col['pk'] > 0)) {
-                $diffs[] = "KOLOM PK      {$key}: ref=" . (int) $isPk . ' vs new=' . (int) ($col['pk'] > 0);
+                $diffs[] = "KOLOM PK      {$key}: ref=".(int) $isPk.' vs new='.(int) ($col['pk'] > 0);
             }
         } else {
             foreach (['column_type', 'is_nullable', 'column_default', 'extra'] as $field) {
                 if ((string) $refCol[$field] !== (string) $col[$field]) {
-                    $diffs[] = "KOLOM BEDA    {$key}.{$field}: ref=" . var_export($refCol[$field], true)
-                        . ' vs new=' . var_export($col[$field], true);
+                    $diffs[] = "KOLOM BEDA    {$key}.{$field}: ref=".var_export($refCol[$field], true)
+                        .' vs new='.var_export($col[$field], true);
                 }
             }
         }
@@ -377,13 +376,13 @@ foreach ($newIndexes as $key => $idx) {
     }
     $refIdx = $refIndexes[$key] ?? null;
     if ($refIdx === null) {
-        $diffs[] = "INDEX BARU    {$key} (" . implode(',', $idx['columns']) . ')';
+        $diffs[] = "INDEX BARU    {$key} (".implode(',', $idx['columns']).')';
 
         continue;
     }
     if ($refIdx['columns'] !== $idx['columns'] || $refIdx['unique'] !== $idx['unique']) {
-        $diffs[] = "INDEX BEDA    {$key}: ref=[" . implode(',', $refIdx['columns']) . '] unique=' . (int) $refIdx['unique']
-            . ' vs new=[' . implode(',', $idx['columns']) . '] unique=' . (int) $idx['unique'];
+        $diffs[] = "INDEX BEDA    {$key}: ref=[".implode(',', $refIdx['columns']).'] unique='.(int) $refIdx['unique']
+            .' vs new=['.implode(',', $idx['columns']).'] unique='.(int) $idx['unique'];
     }
 }
 
@@ -395,21 +394,21 @@ foreach ($refIndexes as $key => $idx) {
         continue;
     }
     // Index pendamping FK tidak dibuat terpisah di SQLite.
-    if ($target === 'sqlite' && ($key === $idx['table'] . '.PRIMARY' || str_ends_with($key, '_foreign'))) {
+    if ($target === 'sqlite' && ($key === $idx['table'].'.PRIMARY' || str_ends_with($key, '_foreign'))) {
         continue;
     }
     if (! isset($newIndexes[$key])) {
-        $diffs[] = "INDEX HILANG  {$key} (" . implode(',', $idx['columns']) . ')';
+        $diffs[] = "INDEX HILANG  {$key} (".implode(',', $idx['columns']).')';
     }
 }
 
 // ---------------------------------------------------------------- foreign key
 
 $fkSignature = static function (array $fk, bool $withName, string $key = ''): string {
-    $sig = $fk['table'] . '|' . implode(',', $fk['columns']) . '->' . $fk['ref_table'] . '.' . implode(',', $fk['ref_columns'])
-        . '|' . normalizeRule($fk['on_delete']) . '/' . normalizeRule($fk['on_update']);
+    $sig = $fk['table'].'|'.implode(',', $fk['columns']).'->'.$fk['ref_table'].'.'.implode(',', $fk['ref_columns'])
+        .'|'.normalizeRule($fk['on_delete']).'/'.normalizeRule($fk['on_update']);
 
-    return $withName ? $key . ' => ' . $sig : $sig;
+    return $withName ? $key.' => '.$sig : $sig;
 };
 
 if ($target === 'sqlite') {
@@ -446,7 +445,7 @@ if ($target === 'sqlite') {
             continue;
         }
         if ($fkSignature($refFk, false) !== $fkSignature($fk, false)) {
-            $diffs[] = "FK BEDA       {$key}: ref=" . $fkSignature($refFk, false) . ' vs new=' . $fkSignature($fk, false);
+            $diffs[] = "FK BEDA       {$key}: ref=".$fkSignature($refFk, false).' vs new='.$fkSignature($fk, false);
         }
     }
     foreach ($refFks as $key => $fk) {
@@ -460,15 +459,15 @@ if ($target === 'sqlite') {
 
 $missingTables = array_values(array_diff($refTables, $newTables, $skipTables));
 
-echo "Driver target     : {$target}" . ($target === 'sqlite' ? " ({$sqlitePath})" : " ({$newDb})") . PHP_EOL;
-echo 'Tabel dibuat      : ' . count($newTables) . ' / referensi ' . count($refTables) . PHP_EOL;
+echo "Driver target     : {$target}".($target === 'sqlite' ? " ({$sqlitePath})" : " ({$newDb})").PHP_EOL;
+echo 'Tabel dibuat      : '.count($newTables).' / referensi '.count($refTables).PHP_EOL;
 if ($missingTables !== []) {
-    echo 'Tabel belum ada   : ' . implode(', ', $missingTables) . PHP_EOL;
+    echo 'Tabel belum ada   : '.implode(', ', $missingTables).PHP_EOL;
 }
-echo 'Selisih kolom/index/FK: ' . count($diffs) . PHP_EOL;
+echo 'Selisih kolom/index/FK: '.count($diffs).PHP_EOL;
 
 foreach ($diffs as $d) {
-    echo ' - ' . $d . PHP_EOL;
+    echo ' - '.$d.PHP_EOL;
 }
 
 exit($diffs === [] ? 0 : 1);
