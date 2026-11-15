@@ -37,7 +37,7 @@ Referensi skema: `D:\project\obat\docs\Struktur Database.md` — ini **sumber tu
 | Skema migration | — | ✅ 45 file (43 domain/sistem + 2 dari package spatie) |
 | Database dev | SQLite + WAL | ✅ 54 tabel, `migrate:fresh --seed` sukses, selisih skema 0 |
 | Database uji | SQLite `:memory:` | ✅ `phpunit.xml` force sqlite (2 test hijau) |
-| Seeder master | — | ✅ 9 user, 5 role, 128 permission, 6 faskes, 53 obat, 3 supplier, 22 avatar |
+| Seeder master | — | ✅ 9 user, 5 role, 128 permission, 6 faskes, 53 obat, 3 supplier, 12 sumber dana, 22 avatar |
 | Repo git | `main` | ✅ commit awal `13cf415` |
 | Filament | — | ✅ tidak terpasang |
 
@@ -278,7 +278,7 @@ Satu tabel referensi tidak dibuat: `settings` (legacy, tidak dipakai kode) — d
 | Kebutuhan | Seeder | Status |
 | --- | --- | --- |
 | 5 role + 128 permission | `RoleAndPermissionSeeder` | ✅ |
-| Master data | `FaskesSeeder` (6), `ObatSeeder` (53), `SupplierSeeder` (3) | ✅ |
+| Master data | `FaskesSeeder` (6), `ObatSeeder` (53), `SupplierSeeder` (3), `SumberDanaSeeder` (12) | ✅ |
 | `pengaturan_laporan` | dibuat `RoleAndPermissionSeeder` (9 baris) | ✅ |
 | Avatar | `AvatarPresetSeeder` (22 preset, butuh `public/assets/images/avatars`) | ✅ |
 | Akun login | `UserSeeder` (9 user, password `user123`, role terpasang) | ✅ |
