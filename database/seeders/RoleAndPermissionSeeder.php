@@ -112,6 +112,8 @@ class RoleAndPermissionSeeder extends Seeder
         $adminDinas->givePermissionTo([
             'view_dashboard',
             'view_obat',
+            'view_fasilitas_kesehatan',
+            'view_users', 'view_roles',
             'view_permintaan_obat', 'update_permintaan_obat',
             'view_distribusi_obat', 'update_distribusi_obat',
             'view_penerimaan_stok',

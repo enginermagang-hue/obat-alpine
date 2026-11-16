@@ -23,9 +23,9 @@ class SumberDana extends Model
         'status',
     ];
 
-    public function setStatusAttribute(bool $value): void
+    public function setStatusAttribute(mixed $value): void
     {
-        $this->attributes['status'] = $value ? 'aktif' : 'nonaktif';
+        $this->attributes['status'] = in_array($value, [true, 1, '1', 'aktif'], true) ? 'aktif' : 'nonaktif';
     }
 
     public function getStatusAttribute(string $value): bool
