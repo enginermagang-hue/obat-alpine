@@ -1,14 +1,11 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
+import modal from './components/modal';
 
 Alpine.store('ui', {
     sidebarOpen: window.innerWidth >= 1024,
     mobileOpen: false,
     dark: (localStorage.getItem('theme') ?? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark',
-
-    init() {
-        this.applyTheme();
-    },
 
     applyTheme() {
         document.documentElement.classList.toggle('dark', this.dark);
@@ -54,6 +51,8 @@ Alpine.data('dropdown', () => ({
         this.open = false;
     },
 }));
+
+Alpine.data('modal', modal);
 
 window.Alpine = Alpine;
 Alpine.start();

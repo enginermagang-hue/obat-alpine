@@ -90,6 +90,7 @@ class RoleAndPermissionSeeder extends Seeder
         // ──────────── admin_gudang (Dinas) ────────────
         $adminGudang->givePermissionTo([
             'view_dashboard', 'manage_obat', 'view_laporan', 'input_laporan',
+            'view_obat', 'create_obat', 'update_obat', 'delete_obat',
             'view_suppliers', 'create_suppliers', 'update_suppliers',
             'view_penerimaan_stok', 'create_penerimaan_stok', 'update_penerimaan_stok',
             'view_stok_gudang', 'view_stok_faskes', 'view_batch_stok',
@@ -110,6 +111,7 @@ class RoleAndPermissionSeeder extends Seeder
         // ──────────── admin_dinas ────────────
         $adminDinas->givePermissionTo([
             'view_dashboard',
+            'view_obat',
             'view_permintaan_obat', 'update_permintaan_obat',
             'view_distribusi_obat', 'update_distribusi_obat',
             'view_penerimaan_stok',

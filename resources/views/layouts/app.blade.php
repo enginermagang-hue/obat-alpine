@@ -50,6 +50,7 @@
                 <span
                     class="truncate text-sm font-semibold tracking-tight text-slate-900 dark:text-white"
                     x-show="$store.ui.sidebarOpen"
+                    x-cloak
                 >
                     Ruang Obat
                 </span>
@@ -81,7 +82,7 @@
 
                     <ul class="space-y-1">
                         @foreach ($section['items'] as $item)
-                            @php $active = request()->routeIs($item['route']); @endphp
+                            @php $active = request()->routeIs($item['route']) || request()->routeIs($item['route'].'.*'); @endphp
                             <li>
                                 <a
                                     href="{{ route($item['route']) }}"
@@ -113,7 +114,7 @@
     </aside>
     @endif
 
-    <div class="flex min-h-screen flex-col transition-all duration-200" :class="$posisi === 'topbar' ? 'lg:pl-0' : ($store.ui.sidebarOpen ? 'lg:pl-64' : 'lg:pl-20')">
+    <div class="flex min-h-screen flex-col transition-all duration-200" @if ($posisi !== 'topbar') :class="$store.ui.sidebarOpen ? 'lg:pl-64' : 'lg:pl-20'" @endif>
         <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
             <div class="flex h-16 items-center gap-3 px-4 sm:px-6">
                 @if ($posisi === 'sidebar')
@@ -206,7 +207,7 @@
                 <nav class="hidden border-t border-slate-200 lg:block dark:border-slate-800">
                     <div class="flex items-center gap-1 overflow-x-auto px-4 py-1.5">
                         @foreach (collect($navSections)->flatMap(fn ($section) => $section['items']) as $item)
-                            @php $active = request()->routeIs($item['route']); @endphp
+                            @php $active = request()->routeIs($item['route']) || request()->routeIs($item['route'].'.*'); @endphp
                             <a
                                 href="{{ route($item['route']) }}"
                                 @class([

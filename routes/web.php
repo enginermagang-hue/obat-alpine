@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\CetakObatExcelController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Master\ImportObatController;
+use App\Http\Controllers\Master\ObatController;
 use App\Http\Controllers\ProfilController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,4 +30,10 @@ Route::middleware('auth')->group(function (): void {
     Route::get('auth/google', [GoogleController::class, 'redirect'])->name('google.redirect');
     Route::get('auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
     Route::post('auth/google/unlink', [ProfilController::class, 'unlinkGoogle'])->name('google.unlink');
+
+    Route::get('obat/export', CetakObatExcelController::class)->name('obat.export');
+    Route::post('obat/import', [ImportObatController::class, 'store'])->name('obat.import');
+    Route::get('obat/import/template', [ImportObatController::class, 'template'])->name('obat.import.template');
+    Route::patch('obat/{obat}/deactivate', [ObatController::class, 'deactivate'])->name('obat.deactivate');
+    Route::resource('obat', ObatController::class)->except('show');
 });

@@ -27,7 +27,7 @@ class DashboardController extends Controller
             'fasilitas' => FasilitasKesehatan::query()->where('status', 'aktif')->count(),
             'expired' => $scoped(BatchStok::query())
                 ->where('jumlah', '>', 0)
-                ->whereBetween('tanggal_expired', [Carbon::today(), Carbon::today()->addDays(90)])
+                ->whereDate('tanggal_expired', '<=', Carbon::today()->addDays(90))
                 ->count(),
             'pemakaian' => $scoped(PemakaianObat::query())
                 ->whereBetween('tanggal_pemakaian', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])

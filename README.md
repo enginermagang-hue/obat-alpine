@@ -33,7 +33,7 @@ Rencana kerja lengkap & status per fase: [`plan.md`](plan.md).
 | 0c | spatie permission/activitylog, seeder master + akun | ✅ |
 | 1a | layout (sidebar/topbar, dark mode), auth, dashboard, profil | ✅ |
 | 1b | 24 service, 24 policy, 21 command, 10 controller cetak, data dummy + model AI | ✅ |
-| 2 | Master data (Obat sebagai pola acuan) | ⏳ berikutnya |
+| 2 | Master data (Obat selesai: CRUD + filter + export + import) | ✅ pola acuan jadi, Fasilitas/Sumber Dana/Supplier/User menyusul |
 | 3–8 | Stok, transaksi, laporan, prediksi, backlog | ⏳ |
 
 Data dummy saat ini: 12 bulan (Des 2025 – Nov 2026), 18.926 pemakaian, 4.419 batch,
@@ -93,7 +93,7 @@ Buka `http://127.0.0.1:8000`.
 ## Perintah harian
 
 ```powershell
-php artisan test                  # 12 test (SQLite :memory:)
+php artisan test                  # 26 test (SQLite :memory:)
 vendor\bin\pint                  # format kode
 php artisan migrate:fresh --seed  # reset DB dev (aman, tanpa data produksi)
 
@@ -118,9 +118,13 @@ app/
     Auth/GoogleController.php       # OAuth Google (opsional)
     DashboardController.php         # KPI + batch mendekati kedaluwarsa
     ProfilController.php            # preferensi, password, unlink Google
+    Master/ObatController.php       # CRUD + nonaktifkan + filter query string
+    Master/ImportObatController.php # upload CSV + template (job async)
+    CetakObatExcelController.php    # export Excel master obat (filter dari index)
     Cetak*.php                      # 10 controller PDF/Excel (reuse project lama)
   Http/Middleware/SetLocaleFromPreferences.php
-  Http/Requests/                    # LoginRequest, ProfilUpdateRequest
+  Http/Requests/                    # LoginRequest, ProfilUpdateRequest, ObatRequest
+  Jobs/ImportObatJob.php          # import CSV obat (upsert by kode_obat)
   Models/                           # 37 model + Traits/LogsActivity
   Policies/                         # 24 policy (auto-discovery)
   Services/                         # 24 service (StokService, FefoService, ANN, dll.)
@@ -128,14 +132,18 @@ app/
   Notifications/AppNotification.php # notifikasi database (pengganti Filament)
   Console/Commands/                 # 21 command (AI, tutup buku, cleanup, docs)
 config/navigation.php               # menu sidebar/topbar (auto-hide bila route belum ada)
+database/factories/                 # UserFactory, ObatFactory
 database/schema-diff.php            # verifier paritas skema (SQlite & MySQL)
+resources/js/components/modal.js    # Alpine.data('modal') reuse semua modul
 resources/views/
   layouts/app.blade.php             # shell aplikasi
+  components/ui/                    # modal, badge, empty-state, pagination
+  master/obat/index.blade.php       # list + filter + modal create/edit + import
   auth/login.blade.php
   dashboard.blade.php
   profil/edit.blade.php
   pdf/                              # 11 template cetak
-routes/web.php                      # 10 route aplikasi
+routes/web.php                      # 17 route (auth + profil + obat + import/export)
 routes/console.php                  # scheduler
 ```
 
@@ -169,10 +177,10 @@ routes/console.php                  # scheduler
 
 ## Lanjutan (TODO berikutnya)
 
-1. **Fase 2 — Master data**: mulai dari modul **Obat** (`/obat`) sebagai pola:
-   `ObatController` (index/create/store/edit/update/destroy) + filter query string + modal Alpine
-   + `FormRequest`, lalu import CSV/Excel memakai tabel `imports`/`exports`.
-   Menu sudah siap di `config/navigation.php` dan otomatis muncul saat route-nya dibuat.
+1. **Fase 2 — Master data (Obat ✅)**: modul **Obat** (`/obat`) selesai sebagai pola:
+   `Master/ObatController` + `ObatRequest` + filter query string + modal Alpine (`modal.js`)
+   + komponen `x-ui/*` + import CSV (`ImportObatJob`, upsert by `kode_obat`) + export Excel.
+   Butuh `php artisan queue:work` agar import async jalan di dev.
 2. Modul berikutnya mengikuti pola yang sama: Fasilitas, Sumber Dana, Supplier, User & Role.
 3. Route cetak (10 controller) belum dipasang — dipasang bersama modul transaksi/laporan (Fase 4–6).
 4. `PanduanController` + view panduan belum dibawa (butuh konten Markdown dari project lama).
