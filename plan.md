@@ -44,7 +44,7 @@ Referensi skema: `D:\project\obat\docs\Struktur Database.md` — ini **sumber tu
 | Services / Policies | — | ✅ 24 service + 24 policy dicopy, Filament dibersihkan |
 | Console & Cetak | — | ✅ 21 command + scheduler, 10 controller cetak, 11 view PDF |
 | Data dummy | — | ✅ 12 bulan: 18.926 pemakaian, 72 distribusi, 35 penerimaan |
-| Test | — | ✅ 74 test, 249 assertion (auth, dashboard, profil, master, stok) |
+| Test | — | ✅ 78 test, 266 assertion (auth, dashboard, profil, master, stok; tabel via JSON) |
 | Repo git | `main` | ✅ 4 commit, working tree bersih |
 | Filament | — | ✅ tidak terpasang |
 
@@ -642,4 +642,7 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
 5. **Fase 1b** ✅: 24 service + 24 policy + 21 command + 10 controller cetak dicopy, Filament dibersihkan, data dummy 12 bulan + 318 model AI terlatih.
 6. **Fase 2** ✅: 5 modul master selesai (obat, fasilitas, sumber dana, supplier, users & roles).
 7. **Fase 3** ✅: stok gudang/faskes + batch + riwayat + opname (25 test baru, total 74 hijau).
+   7b. **Fase 3.5** ✅: 10 tabel index pindah ke Alpine server-backed (`dataTable` + `table-pagination`
+   + `TableMeta`); filter/sort/pagination tanpa reload, URL tersinkron, export ikut filter;
+   test tabel via kontrak JSON (total 78 hijau).
    Lanjut Fase 4 (Transaksi inti).

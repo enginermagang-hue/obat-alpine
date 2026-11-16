@@ -34,7 +34,7 @@ Rencana kerja lengkap & status per fase: [`plan.md`](plan.md).
 | 1a | layout (sidebar/topbar, dark mode), auth, dashboard, profil | ✅ |
 | 1b | 24 service, 24 policy, 21 command, 10 controller cetak, data dummy + model AI | ✅ |
 | 2 | Master data (5 modul: Obat, Faskes, Sumber Dana, Supplier, User & Role) | ✅ |
-| 3 | Stok & batch (Stok Gudang/Faskes, Batch, Riwayat, Opname) | ✅ |
+| 3 | Stok & batch (Stok Gudang/Faskes, Batch, Riwayat, Opname; tabel Alpine server-backed) | ✅ |
 | 3–8 | Stok, transaksi, laporan, prediksi, backlog | ⏳ |
 
 Data dummy saat ini: 12 bulan (Des 2025 – Nov 2026), 18.926 pemakaian, 4.419 batch,
@@ -94,7 +94,7 @@ Buka `http://127.0.0.1:8000`.
 ## Perintah harian
 
 ```powershell
-php artisan test                  # 74 test (SQLite :memory:)
+php artisan test                  # 78 test (SQLite :memory:) — tabel diuji via kontrak JSON
 vendor\bin\pint                  # format kode
 php artisan migrate:fresh --seed  # reset DB dev (aman, tanpa data produksi)
 
@@ -203,6 +203,11 @@ routes/console.php                  # scheduler
    kunci + buka kembali, endpoint lookup obat/batch).
    Perbaikan: `reverseOpname` kini memulihkan batch untuk selisih negatif;
    puskesmas/pustu diberi `view_batch_stok`; nav sadar-permission.
+3. **Fase 3.5 — Tabel Alpine (✅)**: 10 tabel index (5 master + 5 stok) memakai
+   `Alpine.data('dataTable')` server-backed — filter/sort/pagination tanpa reload,
+   payload per halaman ±10 KB, scope faskes tetap di SQL, URL tersinkron
+   (bookmark & back jalan), link Export Excel ikut filter aktif.
+   Test tabel diubah ke kontrak JSON (`GET ?x=y` → `{data, meta}`); test show/detail tetap SSR.
 3. Route cetak (10 controller) belum dipasang — dipasang bersama modul transaksi/laporan (Fase 4–6).
 4. `PanduanController` + view panduan belum dibawa (butuh konten Markdown dari project lama).
 5. Notifikasi database (`AppNotification`) sudah tersimpan, tapi belum ada halaman inbox/bell.
