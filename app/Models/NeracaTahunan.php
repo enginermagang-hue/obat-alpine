@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\LogsActivity;
+use App\Services\NomorFormatService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,21 @@ class NeracaTahunan extends Model
     use LogsActivity;
 
     protected $table = 'neraca_tahunan';
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (self $record) {
+            if (blank($record->nomor_neraca)) {
+                $record->nomor_neraca = NomorFormatService::generate(
+                    'neraca_tahunan',
+                    $record->fasilitas_id,
+                    now()->toDateString(),
+                );
+            }
+        });
+    }
 
     protected $fillable = [
         'nomor_neraca',

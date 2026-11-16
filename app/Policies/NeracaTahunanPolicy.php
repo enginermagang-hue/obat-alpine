@@ -102,4 +102,30 @@ class NeracaTahunanPolicy
             && $neracaTahunan->fasilitas_id === $userFaskesId
             && $neracaTahunan->status === 'draft';
     }
+
+    /**
+     * Ability: selesaikan (draft → selesai) dan buka kembali (selesai → draft).
+     * Syarat kepemilikan sama seperti update.
+     */
+    public function finish(User $user, NeracaTahunan $neracaTahunan): bool
+    {
+        if (! $user->hasPermissionTo('update_neraca_tahunan')) {
+            return false;
+        }
+
+        return filled($user->fasilitas_kesehatan_id)
+            && $neracaTahunan->fasilitas_id === $user->fasilitas_kesehatan_id
+            && $neracaTahunan->status === 'draft';
+    }
+
+    public function reopen(User $user, NeracaTahunan $neracaTahunan): bool
+    {
+        if (! $user->hasPermissionTo('update_neraca_tahunan')) {
+            return false;
+        }
+
+        return filled($user->fasilitas_kesehatan_id)
+            && $neracaTahunan->fasilitas_id === $user->fasilitas_kesehatan_id
+            && $neracaTahunan->status === 'selesai';
+    }
 }

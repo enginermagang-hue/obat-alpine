@@ -19,8 +19,10 @@ use App\Http\Controllers\Stok\RiwayatStokController;
 use App\Http\Controllers\Stok\StokFaskesController;
 use App\Http\Controllers\Stok\StokGudangController;
 use App\Http\Controllers\CetakLplpoController;
+use App\Http\Controllers\CetakNeracaController;
 use App\Http\Controllers\CetakRkoController;
 use App\Http\Controllers\Laporan\LplpoController;
+use App\Http\Controllers\Laporan\NeracaController;
 use App\Http\Controllers\Laporan\RkoController;
 use App\Http\Controllers\Transaksi\DistribusiController;
 use App\Http\Controllers\Transaksi\InspeksiReturController;
@@ -124,6 +126,13 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('cetak/rko/{rko}', [CetakRkoController::class, 'cetakPdf'])->name('rko.cetak-pdf');
     Route::get('cetak/rko/{rko}/xls', [CetakRkoController::class, 'cetakXls'])->name('rko.cetak-xls');
+
+    Route::patch('neraca/{neraca}/finish', [NeracaController::class, 'finish'])->name('neraca.finish');
+    Route::patch('neraca/{neraca}/reopen', [NeracaController::class, 'reopen'])->name('neraca.reopen');
+    Route::resource('neraca', NeracaController::class)->except('edit', 'update');
+
+    Route::get('cetak/neraca/{neraca}', [CetakNeracaController::class, 'cetakPdf'])->name('neraca.cetak-pdf');
+    Route::get('cetak/neraca/{neraca}/xls', [CetakNeracaController::class, 'cetakXls'])->name('neraca.cetak-xls');
 
     Route::patch('retur/{retur}/submit', [ReturController::class, 'submit'])->name('retur.submit');
     Route::patch('retur/{retur}/approve', [ReturController::class, 'approve'])->name('retur.approve');
