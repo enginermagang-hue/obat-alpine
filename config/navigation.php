@@ -37,9 +37,9 @@ return [
     [
         'label' => 'Transaksi',
         'items' => [
-            ['label' => 'Penerimaan', 'route' => 'penerimaan.index', 'icon' => 'arrow-down-tray', 'roles' => ['super_admin', 'admin_gudang']],
-            ['label' => 'Permintaan', 'route' => 'permintaan.index', 'icon' => 'document-text', 'roles' => []],
-            ['label' => 'Distribusi', 'route' => 'distribusi.index', 'icon' => 'paper-airplane', 'roles' => ['super_admin', 'admin_gudang']],
+            ['label' => 'Penerimaan', 'route' => 'penerimaan.index', 'icon' => 'arrow-down-tray', 'roles' => [], 'permission' => 'view_penerimaan_stok'],
+            ['label' => 'Permintaan', 'route' => 'permintaan.index', 'icon' => 'document-text', 'roles' => [], 'permission' => 'view_permintaan_obat'],
+            ['label' => 'Distribusi', 'route' => 'distribusi.index', 'icon' => 'paper-airplane', 'roles' => [], 'permission' => 'view_distribusi_obat'],
             ['label' => 'Pemakaian', 'route' => 'pemakaian.index', 'icon' => 'clipboard-document-list', 'roles' => []],
             ['label' => 'Retur', 'route' => 'retur.index', 'icon' => 'arrow-uturn-left', 'roles' => []],
         ],
