@@ -44,7 +44,7 @@ Referensi skema: `D:\project\obat\docs\Struktur Database.md` — ini **sumber tu
 | Services / Policies | — | ✅ 24 service + 24 policy dicopy, Filament dibersihkan |
 | Console & Cetak | — | ✅ 21 command + scheduler, 10 controller cetak, 11 view PDF |
 | Data dummy | — | ✅ 12 bulan: 18.926 pemakaian, 72 distribusi, 35 penerimaan |
-| Test | — | ✅ 78 test, 266 assertion (auth, dashboard, profil, master, stok; tabel via JSON) |
+| Test | — | ✅ 98 test, 339 assertion (auth, dashboard, profil, master, stok, transaksi) |
 | Repo git | `main` | ✅ 4 commit, working tree bersih |
 | Filament | — | ✅ tidak terpasang |
 
@@ -597,9 +597,9 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
 - [x] StokFaskes
 - [x] RiwayatStoks
 - [x] OpnameStoks
-- [ ] PenerimaanStoks
-- [ ] DistribusiObats
-- [ ] PermintaanObats
+- [x] PenerimaanStoks
+- [x] DistribusiObats
+- [x] PermintaanObats
 - [ ] PemakaianObats
 - [ ] ReturObats
 - [ ] InspeksiReturs
@@ -645,4 +645,5 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
    7b. **Fase 3.5** ✅: 10 tabel index pindah ke Alpine server-backed (`dataTable` + `table-pagination`
    + `TableMeta`); filter/sort/pagination tanpa reload, URL tersinkron, export ikut filter;
    test tabel via kontrak JSON (total 78 hijau).
-   Lanjut Fase 4 (Transaksi inti).
+8. **Fase 4 (sebagian)** ✅: penerimaan (6 test), permintaan (7), distribusi (7) —
+   total 98 hijau. Menyusul: pemakaian & retur (Fase 5).

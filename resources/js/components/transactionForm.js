@@ -147,7 +147,7 @@ export default ({
             const row = this.rows[i];
             if (!row.obat_id || !this.withBatch) continue;
             await this.loadBatches(i);
-            if (row.batch_id && !(row.batches || []).some((b) => String(b.value) === String(row.batch_id)) {
+            if (row.batch_id && !(row.batches || []).some((b) => String(b.value) === String(row.batch_id))) {
                 row.batches.unshift({
                     value: row.batch_id,
                     label: `${row.batch_number || '-'} (saat dokumen)`,
