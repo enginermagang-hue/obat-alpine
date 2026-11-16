@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Master;
 
+use App\Models\PenerimaanStok;
 use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
@@ -62,7 +63,7 @@ class SupplierTest extends TestCase
 
         $this->assertSame('nonaktif', $supplier->fresh()->getAttributes()['status']);
 
-        \App\Models\PenerimaanStok::create([
+        PenerimaanStok::create([
             'supplier_id' => $supplier->id,
             'tipe' => 'pembelian',
             'tanggal_penerimaan' => now()->toDateString(),

@@ -7,7 +7,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Master\FasilitasKesehatanController;
 use App\Http\Controllers\Master\ImportObatController;
 use App\Http\Controllers\Master\ObatController;
+use App\Http\Controllers\Master\RoleController;
 use App\Http\Controllers\Master\SumberDanaController;
+use App\Http\Controllers\Master\SupplierController;
+use App\Http\Controllers\Master\UserController;
 use App\Http\Controllers\ProfilController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,4 +49,12 @@ Route::middleware('auth')->group(function (): void {
 
     Route::patch('sumber-dana/{sumber_dana}/deactivate', [SumberDanaController::class, 'deactivate'])->name('sumber-dana.deactivate');
     Route::resource('sumber-dana', SumberDanaController::class)->except('show');
+
+    Route::patch('supplier/{supplier}/deactivate', [SupplierController::class, 'deactivate'])->name('supplier.deactivate');
+    Route::resource('supplier', SupplierController::class)->except('show');
+
+    Route::put('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
+    Route::resource('users', UserController::class)->except('show');
+
+    Route::resource('roles', RoleController::class)->except('show');
 });

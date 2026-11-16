@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Master;
 
+use App\Models\BatchStok;
+use App\Models\Obat;
 use App\Models\SumberDana;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
@@ -90,8 +92,8 @@ class SumberDanaTest extends TestCase
         $this->assertSame('nonaktif', $dana->fresh()->getAttributes()['status']);
 
         // Dipakai batch → hapus ditolak
-        \App\Models\BatchStok::create([
-            'obat_id' => \App\Models\Obat::factory()->create()->id,
+        BatchStok::create([
+            'obat_id' => Obat::factory()->create()->id,
             'sumber_dana_id' => $dana->id,
             'batch_number' => 'B-001',
             'tanggal_expired' => now()->addYear()->toDateString(),

@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\FasilitasKesehatanRequest;
+use App\Models\BatchStok;
 use App\Models\FasilitasKesehatan;
+use App\Models\PenerimaanStok;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -71,9 +74,9 @@ class FasilitasKesehatanController extends Controller
                 ->with('error', 'Faskes tidak dapat dihapus karena masih dipakai (user, stok, atau pustu turunan). Nonaktifkan saja.');
         }
 
-        if (\App\Models\User::where('fasilitas_kesehatan_id', $fasilitas->id)->exists()
-            || \App\Models\BatchStok::where('fasilitas_id', $fasilitas->id)->exists()
-            || \App\Models\PenerimaanStok::where('fasilitas_id', $fasilitas->id)->exists()) {
+        if (User::where('fasilitas_kesehatan_id', $fasilitas->id)->exists()
+            || BatchStok::where('fasilitas_id', $fasilitas->id)->exists()
+            || PenerimaanStok::where('fasilitas_id', $fasilitas->id)->exists()) {
             return redirect()->route('fasilitas.index')
                 ->with('error', 'Faskes tidak dapat dihapus karena masih dipakai transaksi. Nonaktifkan saja.');
         }

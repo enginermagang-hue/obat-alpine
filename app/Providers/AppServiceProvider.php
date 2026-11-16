@@ -4,11 +4,15 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Models\UserPreference;
+use App\Policies\PermissionPolicy;
+use App\Policies\RolePolicy;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,6 +34,11 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(function (User $user, string $ability): ?bool {
             return $user->hasRole('super_admin') ? true : null;
         });
+
+        // Auto-discovery Laravel tidak menemukan policy untuk model di luar
+        // namespace App\Models (mis. Spatie), jadi daftarkan eksplisit.
+        Gate::policy(Role::class, RolePolicy::class);
+        Gate::policy(Permission::class, PermissionPolicy::class);
 
         View::composer('layouts.app', function ($view): void {
             $user = auth()->user();
