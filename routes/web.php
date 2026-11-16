@@ -19,6 +19,7 @@ use App\Http\Controllers\Stok\RiwayatStokController;
 use App\Http\Controllers\Stok\StokFaskesController;
 use App\Http\Controllers\Stok\StokGudangController;
 use App\Http\Controllers\Transaksi\PenerimaanController;
+use App\Http\Controllers\Transaksi\PermintaanController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -83,6 +84,11 @@ Route::middleware('auth')->group(function (): void {
     Route::patch('penerimaan/{penerimaan}/confirm', [PenerimaanController::class, 'confirm'])->name('penerimaan.confirm');
     Route::patch('penerimaan/{penerimaan}/cancel', [PenerimaanController::class, 'cancel'])->name('penerimaan.cancel');
     Route::resource('penerimaan', PenerimaanController::class);
+
+    Route::patch('permintaan/{permintaan}/submit', [PermintaanController::class, 'submit'])->name('permintaan.submit');
+    Route::patch('permintaan/{permintaan}/approve', [PermintaanController::class, 'approve'])->name('permintaan.approve');
+    Route::patch('permintaan/{permintaan}/reject', [PermintaanController::class, 'reject'])->name('permintaan.reject');
+    Route::resource('permintaan', PermintaanController::class);
 
     Route::prefix('api')->middleware('throttle:60,1')->group(function (): void {
         Route::get('obat/search', [LookupController::class, 'obat'])->name('api.obat.search');
