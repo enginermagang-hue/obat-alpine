@@ -85,4 +85,12 @@ class LaporanLplpoPolicy
             && $laporanLplpo->fasilitas_id === $userFaskesId
             && $laporanLplpo->status === 'draft';
     }
+
+    /**
+     * Verifikasi (setujui/minta revisi): hanya pemegang permission verify (dinas/gudang).
+     */
+    public function verify(User $user, LaporanLplpo $laporanLplpo): bool
+    {
+        return $user->hasPermissionTo('verify_laporan_lplpo');
+    }
 }

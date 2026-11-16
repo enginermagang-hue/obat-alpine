@@ -3,15 +3,33 @@
 namespace App\Models;
 
 use App\Models\Traits\LogsActivity;
+use App\Services\NomorFormatService;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LaporanRko extends Model
 {
+    use HasFactory;
     use LogsActivity;
 
     protected $table = 'laporan_rko';
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (self $record) {
+            if (blank($record->nomor_rko)) {
+                $record->nomor_rko = NomorFormatService::generate(
+                    'laporan_rko',
+                    $record->fasilitas_id,
+                    $record->tanggal_pembuatan?->format('Y-m-d'),
+                );
+            }
+        });
+    }
 
     protected $fillable = [
         'nomor_rko',

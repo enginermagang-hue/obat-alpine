@@ -3,14 +3,17 @@
 namespace App\Models;
 
 use App\Models\Traits\LogsActivity;
+use App\Services\NomorFormatService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LaporanLplpo extends Model
 {
+    use HasFactory;
     use LogsActivity;
 
     public const STATUS_DRAFT = 'draft';
@@ -24,6 +27,21 @@ class LaporanLplpo extends Model
     public const VERIF_REVISI = 'menunggu_revisi';
 
     protected $table = 'laporan_lplpo';
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (self $record) {
+            if (blank($record->nomor_laporan)) {
+                $record->nomor_laporan = NomorFormatService::generate(
+                    'laporan_lplpo',
+                    $record->fasilitas_id,
+                    $record->tanggal_pembuatan?->format('Y-m-d'),
+                );
+            }
+        });
+    }
 
     protected $fillable = [
         'nomor_laporan',

@@ -18,6 +18,8 @@ use App\Http\Controllers\Stok\OpnameController;
 use App\Http\Controllers\Stok\RiwayatStokController;
 use App\Http\Controllers\Stok\StokFaskesController;
 use App\Http\Controllers\Stok\StokGudangController;
+use App\Http\Controllers\CetakLplpoController;
+use App\Http\Controllers\Laporan\LplpoController;
 use App\Http\Controllers\Transaksi\DistribusiController;
 use App\Http\Controllers\Transaksi\InspeksiReturController;
 use App\Http\Controllers\Transaksi\PemakaianController;
@@ -103,6 +105,15 @@ Route::middleware('auth')->group(function (): void {
     Route::resource('pemakaian', PemakaianController::class);
 
     Route::resource('inspeksi-retur', InspeksiReturController::class)->parameters(['inspeksi-retur' => 'inspeksi_retur']);
+
+    Route::patch('lplpo/{lplpo}/submit', [LplpoController::class, 'submit'])->name('lplpo.submit');
+    Route::patch('lplpo/{lplpo}/verify', [LplpoController::class, 'verify'])->name('lplpo.verify');
+    Route::patch('lplpo/{lplpo}/request-revision', [LplpoController::class, 'requestRevision'])->name('lplpo.request-revision');
+    Route::post('lplpo/{lplpo}/revise', [LplpoController::class, 'revise'])->name('lplpo.revise');
+    Route::patch('lplpo/{lplpo}/regenerate', [LplpoController::class, 'regenerate'])->name('lplpo.regenerate');
+    Route::resource('lplpo', LplpoController::class);
+
+    Route::get('cetak/lplpo/{lplpo}', CetakLplpoController::class)->name('lplpo.cetak');
 
     Route::patch('retur/{retur}/submit', [ReturController::class, 'submit'])->name('retur.submit');
     Route::patch('retur/{retur}/approve', [ReturController::class, 'approve'])->name('retur.approve');
