@@ -4,8 +4,10 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CetakObatExcelController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Master\FasilitasKesehatanController;
 use App\Http\Controllers\Master\ImportObatController;
 use App\Http\Controllers\Master\ObatController;
+use App\Http\Controllers\Master\SumberDanaController;
 use App\Http\Controllers\ProfilController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,4 +38,12 @@ Route::middleware('auth')->group(function (): void {
     Route::get('obat/import/template', [ImportObatController::class, 'template'])->name('obat.import.template');
     Route::patch('obat/{obat}/deactivate', [ObatController::class, 'deactivate'])->name('obat.deactivate');
     Route::resource('obat', ObatController::class)->except('show');
+
+    Route::patch('fasilitas/{fasilitas}/deactivate', [FasilitasKesehatanController::class, 'deactivate'])->name('fasilitas.deactivate');
+    Route::resource('fasilitas', FasilitasKesehatanController::class)
+        ->parameters(['fasilitas' => 'fasilitas'])
+        ->except('show');
+
+    Route::patch('sumber-dana/{sumber_dana}/deactivate', [SumberDanaController::class, 'deactivate'])->name('sumber-dana.deactivate');
+    Route::resource('sumber-dana', SumberDanaController::class)->except('show');
 });
