@@ -147,6 +147,7 @@ class RoleAndPermissionSeeder extends Seeder
             'view_neraca_tahunan', 'create_neraca_tahunan', 'update_neraca_tahunan', 'delete_neraca_tahunan',
             'view_opname_stok', 'create_opname_stok', 'update_opname_stok', 'delete_opname_stok',
             'view_retur_obat', 'create_retur_obat', 'update_retur_obat', 'delete_retur_obat',
+            'view_inspeksi_retur', 'create_inspeksi_retur', 'update_inspeksi_retur',
             'view_activity_logs',
             'view_prediksi_kebutuhan', 'view_model_prediksi',
             'view_tutup_buku',

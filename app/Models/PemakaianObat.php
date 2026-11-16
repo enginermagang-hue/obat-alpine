@@ -97,4 +97,18 @@ class PemakaianObat extends Model
 
         return NomorFormatService::generate('pemakaian_obat', $fasilitasId, $date->format('Y-m-d'));
     }
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (self $record) {
+            if (blank($record->nomor_pemakaian)) {
+                $record->nomor_pemakaian = static::generateNomorPemakaian(
+                    $record->tanggal_pemakaian ?? now(),
+                    $record->fasilitas_id,
+                );
+            }
+        });
+    }
 }

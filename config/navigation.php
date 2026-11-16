@@ -40,8 +40,9 @@ return [
             ['label' => 'Penerimaan', 'route' => 'penerimaan.index', 'icon' => 'arrow-down-tray', 'roles' => [], 'permission' => 'view_penerimaan_stok'],
             ['label' => 'Permintaan', 'route' => 'permintaan.index', 'icon' => 'document-text', 'roles' => [], 'permission' => 'view_permintaan_obat'],
             ['label' => 'Distribusi', 'route' => 'distribusi.index', 'icon' => 'paper-airplane', 'roles' => [], 'permission' => 'view_distribusi_obat'],
-            ['label' => 'Pemakaian', 'route' => 'pemakaian.index', 'icon' => 'clipboard-document-list', 'roles' => []],
-            ['label' => 'Retur', 'route' => 'retur.index', 'icon' => 'arrow-uturn-left', 'roles' => []],
+            ['label' => 'Pemakaian', 'route' => 'pemakaian.index', 'icon' => 'clipboard-document-list', 'roles' => [], 'permission' => 'view_pemakaian_obat'],
+            ['label' => 'Retur', 'route' => 'retur.index', 'icon' => 'arrow-uturn-left', 'roles' => [], 'permission' => 'view_retur_obat'],
+            ['label' => 'Inspeksi Retur', 'route' => 'inspeksi-retur.index', 'icon' => 'magnifying-glass', 'roles' => [], 'permission' => 'view_inspeksi_retur'],
         ],
     ],
     [

@@ -11,7 +11,8 @@
         'ditolak' => ['tone' => 'red', 'label' => 'Ditolak'],
         'sedang_didistribusi' => ['tone' => 'violet', 'label' => 'Sedang didistribusi'],
         'diterima' => ['tone' => 'emerald', 'label' => 'Diterima'],
-        // Distribusi
+        // Retur
+        'menunggu_approval' => ['tone' => 'amber', 'label' => 'Menunggu approval'],
         'dalam_pengiriman' => ['tone' => 'amber', 'label' => 'Dalam pengiriman'],
         // Umum
         'draft' => ['tone' => 'slate', 'label' => 'Draft'],

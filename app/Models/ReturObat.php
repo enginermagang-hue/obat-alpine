@@ -4,12 +4,14 @@ namespace App\Models;
 
 use App\Models\Traits\LogsActivity;
 use App\Services\NomorFormatService;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ReturObat extends Model
 {
+    use HasFactory;
     use LogsActivity;
 
     protected $table = 'retur_obat';
