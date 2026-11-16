@@ -13,6 +13,7 @@ use App\Http\Controllers\Master\SupplierController;
 use App\Http\Controllers\Master\UserController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\Stok\BatchController;
+use App\Http\Controllers\Stok\RiwayatStokController;
 use App\Http\Controllers\Stok\StokFaskesController;
 use App\Http\Controllers\Stok\StokGudangController;
 use Illuminate\Support\Facades\Route;
@@ -70,4 +71,6 @@ Route::middleware('auth')->group(function (): void {
     Route::resource('stok-faskes', StokFaskesController::class)->only('index');
 
     Route::resource('batch', BatchController::class)->only('index');
+
+    Route::resource('riwayat-stok', RiwayatStokController::class)->only('index');
 });
