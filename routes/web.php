@@ -19,7 +19,9 @@ use App\Http\Controllers\Stok\RiwayatStokController;
 use App\Http\Controllers\Stok\StokFaskesController;
 use App\Http\Controllers\Stok\StokGudangController;
 use App\Http\Controllers\CetakLplpoController;
+use App\Http\Controllers\CetakRkoController;
 use App\Http\Controllers\Laporan\LplpoController;
+use App\Http\Controllers\Laporan\RkoController;
 use App\Http\Controllers\Transaksi\DistribusiController;
 use App\Http\Controllers\Transaksi\InspeksiReturController;
 use App\Http\Controllers\Transaksi\PemakaianController;
@@ -114,6 +116,14 @@ Route::middleware('auth')->group(function (): void {
     Route::resource('lplpo', LplpoController::class);
 
     Route::get('cetak/lplpo/{lplpo}', CetakLplpoController::class)->name('lplpo.cetak');
+
+    Route::patch('rko/{rko}/submit', [RkoController::class, 'submit'])->name('rko.submit');
+    Route::patch('rko/{rko}/approve', [RkoController::class, 'approve'])->name('rko.approve');
+    Route::patch('rko/{rko}/reject', [RkoController::class, 'reject'])->name('rko.reject');
+    Route::resource('rko', RkoController::class);
+
+    Route::get('cetak/rko/{rko}', [CetakRkoController::class, 'cetakPdf'])->name('rko.cetak-pdf');
+    Route::get('cetak/rko/{rko}/xls', [CetakRkoController::class, 'cetakXls'])->name('rko.cetak-xls');
 
     Route::patch('retur/{retur}/submit', [ReturController::class, 'submit'])->name('retur.submit');
     Route::patch('retur/{retur}/approve', [ReturController::class, 'approve'])->name('retur.approve');
