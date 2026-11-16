@@ -18,11 +18,18 @@ use App\Http\Controllers\Stok\OpnameController;
 use App\Http\Controllers\Stok\RiwayatStokController;
 use App\Http\Controllers\Stok\StokFaskesController;
 use App\Http\Controllers\Stok\StokGudangController;
+use App\Http\Controllers\CetakFakturController;
+use App\Http\Controllers\CetakFakturPenerimaanController;
+use App\Http\Controllers\CetakFakturReturController;
 use App\Http\Controllers\CetakLplpoController;
 use App\Http\Controllers\CetakNeracaController;
+use App\Http\Controllers\CetakPermintaanController;
 use App\Http\Controllers\CetakRkoController;
+use App\Http\Controllers\DownloadSuratPermintaanController;
+use App\Http\Controllers\Laporan\AlokasiDanaController;
 use App\Http\Controllers\Laporan\LplpoController;
 use App\Http\Controllers\Laporan\NeracaController;
+use App\Http\Controllers\Laporan\PengaturanLaporanController;
 use App\Http\Controllers\Laporan\RkoController;
 use App\Http\Controllers\Laporan\TutupBukuController;
 use App\Http\Controllers\Transaksi\DistribusiController;
@@ -135,10 +142,22 @@ Route::middleware('auth')->group(function (): void {
     Route::get('cetak/neraca/{neraca}', [CetakNeracaController::class, 'cetakPdf'])->name('neraca.cetak-pdf');
     Route::get('cetak/neraca/{neraca}/xls', [CetakNeracaController::class, 'cetakXls'])->name('neraca.cetak-xls');
 
+    Route::get('cetak/distribusi/{distribusi}', CetakFakturController::class)->name('distribusi.cetak');
+    Route::get('cetak/penerimaan/{penerimaan}', CetakFakturPenerimaanController::class)->name('penerimaan.cetak');
+    Route::get('cetak/retur/{retur}', CetakFakturReturController::class)->name('retur.cetak');
+    Route::get('cetak/permintaan/{permintaan}', CetakPermintaanController::class)->name('permintaan.cetak');
+    Route::get('permintaan/{permintaan}/surat', DownloadSuratPermintaanController::class)->name('permintaan.surat');
+
     Route::post('tutup-buku', [TutupBukuController::class, 'store'])->name('tutup-buku.store');
     Route::patch('tutup-buku/{tutupBuku}/buka-kembali', [TutupBukuController::class, 'bukaKembali'])->name('tutup-buku.buka-kembali');
     Route::patch('tutup-buku/{tutupBuku}/tutup-kembali', [TutupBukuController::class, 'tutupKembali'])->name('tutup-buku.tutup-kembali');
     Route::get('tutup-buku', [TutupBukuController::class, 'index'])->name('tutup-buku.index');
+
+    Route::get('alokasi-dana', [AlokasiDanaController::class, 'index'])->name('alokasi-dana.index');
+
+    Route::get('pengaturan-laporan', [PengaturanLaporanController::class, 'index'])->name('pengaturan-laporan.index');
+    Route::patch('pengaturan-laporan/rko', [PengaturanLaporanController::class, 'updateGlobal'])->name('pengaturan-laporan.global');
+    Route::patch('pengaturan-laporan/rko/faskes/{faskes}', [PengaturanLaporanController::class, 'updateFaskes'])->name('pengaturan-laporan.faskes');
 
     Route::patch('retur/{retur}/submit', [ReturController::class, 'submit'])->name('retur.submit');
     Route::patch('retur/{retur}/approve', [ReturController::class, 'approve'])->name('retur.approve');
