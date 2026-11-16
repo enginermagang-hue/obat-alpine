@@ -58,7 +58,7 @@
 
             <button
                 type="button"
-                class="ml-auto hidden rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700 lg:block dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                class="btn-icon ml-auto hidden lg:inline-flex"
                 @click="$store.ui.toggleSidebar()"
                 :title="$store.ui.sidebarOpen ? 'Ciutkan menu' : 'Lebarkan menu'"
             >
@@ -120,7 +120,7 @@
                 @if ($posisi === 'sidebar')
                 <button
                     type="button"
-                    class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 lg:hidden dark:hover:bg-slate-800"
+                    class="btn-icon lg:hidden"
                     @click="$store.ui.toggleSidebar()"
                 >
                     <x-heroicon-o-bars-3 class="h-5 w-5" />
@@ -139,7 +139,7 @@
                 <div class="ml-auto flex items-center gap-1 sm:gap-2">
                     <button
                         type="button"
-                        class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                        class="btn-icon"
                         @click="$store.ui.toggleDark()"
                         :title="$store.ui.dark ? 'Mode terang' : 'Mode gelap'"
                     >

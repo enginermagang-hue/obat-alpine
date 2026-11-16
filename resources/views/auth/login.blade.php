@@ -99,7 +99,7 @@
                     @csrf
 
                     <div>
-                        <label for="email" class="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">Email</label>
+                        <label for="email" class="form-label">Email</label>
                         <div class="relative">
                             <span class="pointer-events-none absolute inset-y-0 left-0 grid w-11 place-items-center text-slate-400">
                                 <x-heroicon-o-envelope class="h-5 w-5" />
@@ -113,20 +113,19 @@
                                 autofocus
                                 autocomplete="username"
                                 @class([
-                                    'w-full rounded-xl border bg-white py-2.5 pl-11 pr-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:ring-2 dark:bg-slate-900 dark:text-white',
-                                    'border-red-300 ring-red-100 focus:border-red-400 focus:ring-red-100 dark:border-red-500/40' => $errors->has('email'),
-                                    'border-slate-300 focus:border-brand-500 focus:ring-brand-100 dark:border-slate-700 dark:focus:border-brand-500 dark:focus:ring-brand-500/20' => ! $errors->has('email'),
+                                    'form-input pl-11 pr-3 py-2.5',
+                                    'is-invalid' => $errors->has('email'),
                                 ])
                                 placeholder="nama@instansi.go.id"
                             >
                         </div>
                         @error('email')
-                            <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            <p class="form-error">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label for="password" class="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">Password</label>
+                        <label for="password" class="form-label">Password</label>
                         <div class="relative" x-data="{ show: false }">
                             <span class="pointer-events-none absolute inset-y-0 left-0 grid w-11 place-items-center text-slate-400">
                                 <x-heroicon-o-lock-closed class="h-5 w-5" />
@@ -138,9 +137,8 @@
                                 required
                                 autocomplete="current-password"
                                 @class([
-                                    'w-full rounded-xl border bg-white py-2.5 pl-11 pr-11 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:ring-2 dark:bg-slate-900 dark:text-white',
-                                    'border-red-300 ring-red-100 focus:border-red-400 focus:ring-red-100 dark:border-red-500/40' => $errors->has('password'),
-                                    'border-slate-300 focus:border-brand-500 focus:ring-brand-100 dark:border-slate-700 dark:focus:border-brand-500 dark:focus:ring-brand-500/20' => ! $errors->has('password'),
+                                    'form-input pl-11 pr-11 py-2.5',
+                                    'is-invalid' => $errors->has('password'),
                                 ])
                                 placeholder="••••••••"
                             >
@@ -155,24 +153,24 @@
                             </button>
                         </div>
                         @error('password')
-                            <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            <p class="form-error">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                    <label class="form-check">
                         <input
                             type="checkbox"
                             name="remember"
                             value="1"
                             @checked(old('remember'))
-                            class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800"
+                            class="form-checkbox"
                         >
                         Ingat saya di perangkat ini
                     </label>
 
                     <button
                         type="submit"
-                        class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+                        class="btn btn-primary btn-block py-2.5"
                     >
                         <x-heroicon-o-arrow-right-on-rectangle class="h-5 w-5" />
                         Masuk
@@ -181,7 +179,7 @@
 
                 <div class="mt-6 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                     <span>Butuh bantuan? Hubungi admin gudang farmasi.</span>
-                    <button type="button" class="rounded-lg p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="
+                    <button type="button" class="btn-icon" onclick="
                         const dark = !document.documentElement.classList.contains('dark');
                         document.documentElement.classList.toggle('dark', dark);
                         localStorage.setItem('theme', dark ? 'dark' : 'light');

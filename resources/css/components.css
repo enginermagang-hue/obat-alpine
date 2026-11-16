@@ -1,0 +1,215 @@
+/*
+ * Komponen form & tombol "Ruang Obat".
+ *
+ * Dipakai di Blade sebagai class semantik (form-input, btn-primary, …)
+ * agar tidak ada lagi hardcode class Tailwind yang panjang di setiap view.
+ * Utility Tailwind di Blade tetap bisa dipakai untuk menimpa (mis. `pl-11`
+ * untuk input ber-ikon) karena semua rule di bawah ada di @layer components.
+ *
+ * Token --field-* dipakai bersama resources/css/tomselect.css supaya
+ * input / select native / .ts-control TomSelect selalu identik.
+ */
+
+:root {
+    --field-bg: #fff;
+    --field-border: #cbd5e1; /* slate-300 */
+    --field-text: #0f172a; /* slate-900 */
+    --field-muted: #94a3b8; /* slate-400 */
+    --field-radius: 0.75rem;
+    --field-px: 0.75rem;
+    --field-py: 0.5rem;
+    --field-ring: #d0ebfa; /* brand-100 */
+    --field-border-focus: #0083bf; /* brand-500 */
+    --field-bg-disabled: #f8fafc; /* slate-50 */
+    --field-text-disabled: #64748b; /* slate-500 */
+    --field-border-invalid: #fca5a5; /* red-300 */
+    --field-ring-invalid: #fee2e2; /* red-100 */
+}
+
+.dark {
+    --field-bg: #020617; /* slate-950 */
+    --field-border: #334155; /* slate-700 */
+    --field-text: #fff;
+    --field-muted: #64748b; /* slate-500 */
+    --field-ring: rgb(0 131 191 / 0.2); /* brand-500/20 */
+    --field-bg-disabled: rgb(30 41 59 / 0.5); /* slate-800/50 */
+    --field-text-disabled: #94a3b8; /* slate-400 */
+    --field-border-invalid: rgb(239 68 68 / 0.4); /* red-500/40 */
+    --field-ring-invalid: rgb(239 68 68 / 0.15);
+}
+
+@layer components {
+    /* ---------- Label, error, hint ---------- */
+
+    .form-label {
+        @apply mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200;
+    }
+
+    .form-label-req::after {
+        content: ' *';
+        @apply text-red-500;
+    }
+
+    .form-error {
+        @apply mt-1.5 text-xs text-red-600 dark:text-red-400;
+    }
+
+    .form-hint {
+        @apply mt-1.5 text-xs text-slate-500 dark:text-slate-400;
+    }
+
+    /* ---------- Field teks ---------- */
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+        @apply w-full rounded-xl border bg-white text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:ring-2 disabled:cursor-not-allowed dark:bg-slate-950 dark:text-white;
+
+        background-color: var(--field-bg);
+        border-color: var(--field-border);
+        border-radius: var(--field-radius);
+        color: var(--field-text);
+        padding: var(--field-py) var(--field-px);
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+        color: var(--field-muted);
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+        border-color: var(--field-border-focus);
+        box-shadow: 0 0 0 2px var(--field-ring);
+    }
+
+    .form-input:disabled,
+    .form-select:disabled,
+    .form-textarea:disabled {
+        background-color: var(--field-bg-disabled);
+        border-color: var(--field-border);
+        color: var(--field-text-disabled);
+    }
+
+    .form-input.is-invalid,
+    .form-select.is-invalid,
+    .form-textarea.is-invalid {
+        border-color: var(--field-border-invalid);
+    }
+
+    .form-input.is-invalid:focus,
+    .form-select.is-invalid:focus,
+    .form-textarea.is-invalid:focus {
+        border-color: var(--field-border-invalid);
+        box-shadow: 0 0 0 2px var(--field-ring-invalid);
+    }
+
+    /* ---------- Select native ---------- */
+
+    .form-select {
+        appearance: none;
+        -webkit-appearance: none;
+        padding-right: 2.25rem;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.25rem 1.25rem;
+        cursor: pointer;
+    }
+
+    .dark .form-select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+    }
+
+    /* ---------- Textarea ---------- */
+
+    .form-textarea {
+        min-height: 6rem;
+        resize: vertical;
+    }
+
+    /* ---------- File ---------- */
+
+    .form-file {
+        @apply w-full rounded-xl border bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium focus:ring-2 dark:border-slate-700 dark:bg-slate-950 dark:text-white file:dark:bg-slate-800 file:dark:text-slate-200;
+
+        border-color: var(--field-border);
+    }
+
+    .form-file:focus {
+        border-color: var(--field-border-focus);
+        box-shadow: 0 0 0 2px var(--field-ring);
+    }
+
+    /* ---------- Checkbox & radio ---------- */
+
+    .form-checkbox,
+    .form-radio {
+        @apply h-4 w-4 shrink-0 accent-brand-600 focus:ring-2 focus:ring-brand-100 dark:focus:ring-brand-500/20;
+    }
+
+    .form-radio {
+        @apply rounded-full;
+    }
+
+    .form-checkbox {
+        @apply rounded;
+    }
+
+    .form-check {
+        @apply flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300;
+    }
+
+    /* ---------- Tombol ---------- */
+
+    .btn {
+        @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .btn-primary {
+        @apply bg-brand-600 text-white shadow-sm hover:bg-brand-700 focus-visible:ring-brand-500;
+    }
+
+    .btn-secondary {
+        @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
+    }
+
+    .btn-ghost {
+        @apply font-medium text-slate-600 hover:bg-slate-100 focus-visible:ring-brand-500 dark:text-slate-300 dark:hover:bg-slate-800;
+    }
+
+    .btn-dark {
+        @apply bg-slate-900 text-white hover:bg-slate-800 focus-visible:ring-slate-500 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200;
+    }
+
+    .btn-danger {
+        @apply border border-red-200 text-red-600 hover:bg-red-50 focus-visible:ring-red-500 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10;
+    }
+
+    .btn-danger-solid {
+        @apply bg-red-600 text-white shadow-sm hover:bg-red-700 focus-visible:ring-red-500;
+    }
+
+    .btn-block {
+        @apply w-full;
+    }
+
+    .btn-sm {
+        @apply px-3 py-2;
+    }
+
+    /* ---------- Tombol ikon ---------- */
+
+    .btn-icon {
+        @apply inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:p-2 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200;
+    }
+
+    .btn-icon-danger {
+        @apply text-red-600 hover:bg-red-50 hover:text-red-700 focus-visible:ring-red-500 dark:text-red-400 dark:hover:bg-red-500/10;
+    }
+
+    .btn-icon-warning {
+        @apply text-amber-600 hover:bg-amber-50 hover:text-amber-700 focus-visible:ring-amber-500 dark:text-amber-400 dark:hover:bg-amber-500/10;
+    }
+}

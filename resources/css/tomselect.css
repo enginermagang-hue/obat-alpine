@@ -1,0 +1,169 @@
+@import 'tom-select/dist/css/tom-select.css';
+
+/*
+ * TomSelect — penyesuaian tema "Ruang Obat".
+ * Base structural diimpor di atas; di bawah ini hanya override visual
+ * agar konsisten dengan input Tailwind (rounded-xl, slate, brand-*)
+ * termasuk varian dark mode (class `.dark`).
+ */
+
+/* Pastikan <select> asli tidak tampil dobel bila base CSS berubah. */
+select.tomselected {
+    display: none !important;
+}
+
+.ts-wrapper {
+    width: 100%;
+    /* Pengaman: TomSelect menyalin class <select> ke wrapper (tidak bisa
+       dimatikan), jadi netralkan sisa frame luar agar tidak bersarang. */
+    border: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.ts-wrapper.single .ts-control,
+.ts-wrapper.multi .ts-control {
+    border: 1px solid var(--field-border);
+    background-color: var(--field-bg);
+    border-radius: var(--field-radius);
+    padding: var(--field-py) var(--field-px);
+    font-size: 0.875rem; /* text-sm */
+    line-height: 1.25rem;
+    color: var(--field-text);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */
+    min-height: 2.625rem;
+}
+
+.ts-wrapper.single .ts-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem 1.25rem;
+    padding-right: 2rem;
+}
+
+.ts-wrapper.focus .ts-control,
+.ts-wrapper.focus.single .ts-control {
+    border-color: var(--field-border-focus);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--field-ring);
+}
+
+/* State invalid — selaras dengan .is-invalid di components.css. */
+.ts-control.ts-control--invalid {
+    border-color: var(--field-border-invalid) !important;
+    box-shadow: 0 0 0 2px var(--field-ring-invalid) !important;
+}
+
+.ts-control > input {
+    color: inherit;
+    font-size: inherit;
+}
+
+.ts-control > input::placeholder {
+    color: var(--field-muted);
+}
+
+/* Dropdown */
+.ts-dropdown {
+    border-radius: 0.75rem;
+    border: 1px solid rgb(226 232 240); /* slate-200 */
+    background-color: #fff;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    z-index: 100; /* di atas modal (z-50) */
+    overflow: hidden;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: rgb(15 23 42);
+}
+
+.ts-dropdown .ts-dropdown-content {
+    padding: 0.25rem;
+    max-height: 15rem;
+}
+
+.ts-dropdown .option {
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+}
+
+.ts-dropdown .option.active {
+    background-color: rgb(241 245 249); /* slate-100 */
+    color: rgb(15 23 42);
+}
+
+.ts-dropdown .option.selected {
+    background-color: var(--color-brand-50, #eaf6fd);
+    color: var(--color-brand-700, #05577f);
+    font-weight: 500;
+}
+
+.ts-dropdown .optgroup-header {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgb(148 163 184);
+    padding: 0.5rem 0.75rem 0.25rem;
+}
+
+.ts-dropdown .no-results {
+    padding: 0.75rem;
+    color: rgb(148 163 184);
+    font-size: 0.875rem;
+}
+
+.ts-dropdown .create {
+    color: var(--color-brand-600, #016b9d);
+}
+
+/* Multi-select: item terpilih */
+.ts-wrapper.multi .ts-control > .item {
+    border-radius: 0.5rem;
+    background-color: var(--color-brand-50, #eaf6fd);
+    border: 1px solid var(--color-brand-200, #a5d9f5);
+    color: var(--color-brand-700, #05577f);
+    font-size: 0.8125rem;
+    padding: 0.125rem 0.375rem 0.125rem 0.5rem;
+    margin: 0 0.25rem 0.125rem 0;
+}
+
+/* ---- Dark mode ----
+   Warna dasar (.ts-control) sudah ikut token --field-* yang berubah
+   di `.dark`, jadi di sini hanya chevron + dropdown + placeholder. */
+.dark .ts-wrapper.single .ts-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+}
+
+.dark .ts-control > input::placeholder {
+    color: var(--field-muted);
+}
+
+.dark .ts-dropdown {
+    border-color: rgb(51 65 85);
+    background-color: rgb(2 6 23); /* slate-950 */
+    color: #fff;
+}
+
+.dark .ts-dropdown .option.active {
+    background-color: rgb(30 41 59 / 0.6); /* slate-800/60 */
+    color: #fff;
+}
+
+.dark .ts-dropdown .option.selected {
+    background-color: rgb(0 131 191 / 0.15);
+    color: var(--color-brand-200, #a5d9f5);
+}
+
+.dark .ts-wrapper.multi .ts-control > .item {
+    background-color: rgb(0 131 191 / 0.15);
+    border-color: rgb(0 131 191 / 0.4);
+    color: var(--color-brand-200, #a5d9f5);
+}
+
+.dark .ts-dropdown .no-results {
+    color: rgb(100 116 139);
+}
