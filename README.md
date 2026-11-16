@@ -97,7 +97,7 @@ Buka `http://127.0.0.1:8000`.
 ## Perintah harian
 
 ```powershell
-php artisan test                  # 78 test (SQLite :memory:) — tabel diuji via kontrak JSON
+php artisan test                  # 147 test (SQLite :memory:) — tabel diuji via kontrak JSON
 vendor\bin\pint                  # format kode
 php artisan migrate:fresh --seed  # reset DB dev (aman, tanpa data produksi)
 
@@ -140,11 +140,17 @@ app/
     Transaksi/PemakaianController.php # auto-split FEFO, edit/hapus hari ini
     Transaksi/ReturController.php # 3 tipe, ajukan/setujui/tolak/kirim/terima/selesai + upload bukti
     Transaksi/InspeksiReturController.php # list/form, satu inspeksi per detail, tanpa ubah stok
+    Laporan/LplpoController.php   # generate dari riwayat, verifikasi dinas, revisi, cetak PDF
+    Laporan/RkoController.php     # preview service, periode dari pengaturan, ajukan/setujui/tolak, cetak PDF/XLS
+    Laporan/NeracaController.php  # generate dari stok, selesai/buka kembali, cetak PDF/XLS
+    Laporan/TutupBukuController.php # cut-off inisial/tahunan, buka-tutup kembali, lock transaksi
+    Laporan/AlokasiDanaController.php # KPI + tabel ringkasan + dataset grafik (Chart.js)
+    Laporan/PengaturanLaporanController.php # panel buka akses RKO global + override per faskes
     Master/ImportObatController.php # upload CSV + template (job async)
     CetakObatExcelController.php    # export Excel master obat (filter dari index)
     Cetak*.php                      # 10 controller PDF/Excel (reuse project lama)
   Http/Middleware/SetLocaleFromPreferences.php
-  Http/Requests/                    # Login, Profil, Obat, Faskes, Dana, Supplier, User, Opname, Penerimaan, Permintaan, Distribusi, Pemakaian, Retur, Inspeksi
+  Http/Requests/                    # Login, Profil, Obat, Faskes, Dana, Supplier, User, Opname, Penerimaan, Permintaan, Distribusi, Pemakaian, Retur, Inspeksi, Lplpo, Rko, Neraca
   Jobs/ImportObatJob.php          # import CSV obat (upsert by kode_obat)
   Policies/                         # 25 policy (BatchStokPolicy baru Fase 3)
   Support/FaskesAccess.php          # visibleFasilitasIds + scopeQuery (dipakai semua list stok)
@@ -154,11 +160,15 @@ app/
   Console/Commands/                 # 21 command (AI, tutup buku, cleanup, docs)
 config/navigation.php               # menu sidebar/topbar (filter route + role + permission)
 database/factories/                 # User, Obat, Faskes, Dana, Supplier, BatchStok, RiwayatStok,
-                                  # Penerimaan, Permintaan, Distribusi, Pemakaian, Retur
+                                  # Penerimaan, Permintaan, Distribusi, Pemakaian, Retur,
+                                  # LaporanLplpo, LaporanRko, NeracaTahunan, TutupBuku
 database/schema-diff.php            # verifier paritas skema (SQlite & MySQL)
 resources/js/components/modal.js    # Alpine.data('modal') reuse semua modul
 resources/js/components/docForm.js  # Alpine.data('opnameForm') form multi-baris
+resources/js/components/table.js    # Alpine.data('dataTable') tabel server-backed
 resources/js/components/transactionForm.js # Alpine.data('transactionForm') + preview alokasi
+resources/js/directives/chart.js    # Alpine.directive('x-chart') Chart.js + palet dark mode
+resources/js/services/tomselect.js  # init TomSelect global (observe)
 resources/views/
   layouts/app.blade.php             # shell aplikasi
   components/ui/                    # modal, badge, empty-state, pagination
@@ -174,11 +184,17 @@ resources/views/
   transaksi/pemakaian/              # index + form + show (auto-split FEFO)
   transaksi/retur/                  # index + form + show (alur 7 status)
   transaksi/inspeksi/               # index + form + show (tanpa ubah stok)
+  laporan/lplpo/                    # index + form + show (generate, verifikasi, revisi)
+  laporan/rko/                      # index + form + show (preview, ajukan/setujui/tolak)
+  laporan/neraca/                   # index + form + show (generate, selesai/buka kembali)
+  laporan/tutup-buku/               # index (cut-off inisial/tahunan, buka-tutup kembali)
+  laporan/alokasi-dana/             # index (KPI + tabel + grafik x-chart)
+  laporan/pengaturan/               # index (akses RKO global + override faskes)
   auth/login.blade.php
   dashboard.blade.php
   profil/edit.blade.php
   pdf/                              # 11 template cetak
-routes/web.php                      # auth + profil + master + stok + transaksi + api lookup
+routes/web.php                      # auth + profil + master + stok + transaksi + laporan + cetak + pengaturan + api lookup
 routes/console.php                  # scheduler
 ```
 
@@ -210,36 +226,45 @@ routes/console.php                  # scheduler
 
 ---
 
-## Lanjutan (TODO berikutnya)
+## Status fase (ringkas)
 
-1. **Fase 2 — Master data (5 modul ✅)**: Obat, Fasilitas, Sumber Dana, Supplier, User & Role —
-   pola `Controller + Request + modal Alpine + x-ui/*` dipakai ulang Fase 3.
-   Butuh `php artisan queue:work` agar import CSV obat async jalan di dev.
+1. **Fase 2 — Master data (✅)**: Obat, Fasilitas, Sumber Dana, Supplier, User & Role —
+   pola `Controller + Request + modal Alpine + x-ui/*` dipakai ulang fase berikutnya.
+   Import CSV obat async butuh `php artisan queue:work` di dev.
 2. **Fase 3 — Stok & batch (✅)**: Stok Gudang/Faskes (KPI, status Habis/Menipis/Tersedia,
    drill-down batch, hitung stok minimum), Batch (KPI nilai & kadaluarsa),
-   Riwayat Stok (filter tipe/tanggal), Opname (form multi-baris, 3 tahap status,
-   kunci + buka kembali, endpoint lookup obat/batch).
-   Perbaikan: `reverseOpname` kini memulihkan batch untuk selisih negatif;
+   Riwayat Stok, Opname (form multi-baris, 3 tahap status, kunci + buka kembali).
+   Perbaikan: `reverseOpname` memulihkan batch untuk selisih negatif;
    puskesmas/pustu diberi `view_batch_stok`; nav sadar-permission.
-3. **Fase 3.5 — Tabel Alpine (✅)**: 10 tabel index (5 master + 5 stok) memakai
+3. **Fase 3.5 — Tabel Alpine (✅)**: semua tabel index memakai
    `Alpine.data('dataTable')` server-backed — filter/sort/pagination tanpa reload,
-   payload per halaman ±10 KB, scope faskes tetap di SQL, URL tersinkron
-   (bookmark & back jalan), link Export Excel ikut filter aktif.
-   Test tabel diubah ke kontrak JSON (`GET ?x=y` → `{data, meta}`); test show/detail tetap SSR.
-4. **Fase 4 — Transaksi inti (✅)**: Penerimaan (draft/konfirmasi/batal, scope faskes),
+   scope faskes tetap di SQL, URL tersinkron (bookmark & back jalan),
+   link Export Excel ikut filter aktif.
+   Test tabel via kontrak JSON (`GET ?x=y` → `{data, meta}`); test show/detail tetap SSR.
+4. **Fase 4–5 — Transaksi (✅)**: Penerimaan (draft/konfirmasi/batal, scope faskes),
    Permintaan (auto tipe & tujuan, ajukan, tinjau jumlah per baris, setujui/tolak),
    Distribusi (auto-split FEFO server-side, preview alokasi, kirim/batalkan/tolak,
    buat penerimaan tertaut), Pemakaian (auto-split FEFO, edit/hapus hanya hari ini),
    Retur 3 tipe (ajukan/setujui/tolak/kirim/terima/selesai, upload bukti),
    Inspeksi Retur (satu per detail, tanpa mengubah stok).
-   Perbaikan: `reverseOpname` memulihkan batch; auto-number surat jalan & pemakaian;
+   Perbaikan: auto-number surat jalan & pemakaian;
    policy aksi khusus (`confirm/cancel/submit/approve/send/receive/complete`).
-5. Route cetak (10 controller) ✅ terpasang bersama modul laporan (Fase 6):
-   PDF LPLPO/RKO/neraca + faktur distribusi/penerimaan/retur/permintaan + surat + Excel.
-6. `PanduanController` + view panduan belum dibawa (butuh konten Markdown dari project lama).
-7. Notifikasi database (`AppNotification`) sudah tersimpan, tapi belum ada halaman inbox/bell.
-8. Tambah test fitur per modul; pertimbangkan konversi ke Pest (§5.1 `plan.md`).
-9. i18n: pesan validasi masih Inggris (belum ada file `lang/id`); tanggal sudah Indonesia via Carbon.
+5. **Fase 6 — Pelaporan & cut-off (✅, 147 test)**:
+   LPLPO (generate dari riwayat, verifikasi, revisi), RKO (preview, periode dari
+   pengaturan, approve dinas), Neraca (generate dari stok, selesai/buka kembali),
+   Tutup Buku (cut-off inisial/tahunan, buka-tutup kembali, lock transaksi),
+   Alokasi Dana (KPI + tabel + grafik `x-chart`), Pengaturan Laporan (akses RKO),
+   Cetak (PDF LPLPO/RKO/neraca + faktur distribusi/penerimaan/retur/permintaan + surat + Excel).
+   Perbaikan penting: `StokService`/`NeracaTahunanService` wajib inject
+   `TutupBukuService` (sebelumnya nullable → proteksi tanggal diam-diam dilewati).
+
+## TODO tersisa
+
+1. `PanduanController` + view panduan belum dibawa (butuh konten Markdown dari project lama).
+2. Notifikasi database (`AppNotification`) sudah tersimpan, tapi belum ada halaman inbox/bell.
+3. Tambah test fitur per modul; pertimbangkan konversi ke Pest (§5.1 `plan.md`).
+4. i18n: pesan validasi masih Inggris (belum ada file `lang/id`); tanggal sudah Indonesia via Carbon.
+5. Fase 7–8: Prediksi AI & dashboard, lalu backlog (`plan.md` §11–12).
 
 Detail keputusan & risiko ada di [`plan.md`](plan.md) §13 dan §15.
 
