@@ -124,8 +124,9 @@
                     <template x-for="(row, i) in rows" :key="i">
                         <div class="grid gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-700 sm:grid-cols-12">
                             <div class="relative sm:col-span-4">
-                                <label class="form-label">Obat *</label>
+                                <label class="form-label" :for="'obat-search-' + i">Obat *</label>
                                 <input
+                                    :id="'obat-search-' + i"
                                     type="text"
                                     placeholder="Ketik untuk mencari…"
                                     :value="row.obat_label"
@@ -150,8 +151,8 @@
                             </div>
 
                             <div class="sm:col-span-3" x-show="tipe === 'penyesuaian'">
-                                <label class="form-label">Batch</label>
-                                <select :name="'rows[' + i + '][batch_id]'" x-model="row.batch_id" @change="onBatchChange(i)" class="form-select" data-tomselect-off>
+                                <label class="form-label" :for="'batch-' + i">Batch</label>
+                                <select :id="'batch-' + i" :name="'rows[' + i + '][batch_id]'" x-model="row.batch_id" @change="onBatchChange(i)" class="form-select" data-tomselect-off>
                                     <option value="">— Tanpa batch —</option>
                                     <template x-for="b in row.batches" :key="b.value">
                                         <option :value="b.value" x-text="b.label"></option>
@@ -160,13 +161,13 @@
                             </div>
 
                             <div class="sm:col-span-2" x-show="tipe !== 'penyesuaian'">
-                                <label class="form-label">No. batch</label>
-                                <input type="text" :name="'rows[' + i + '][batch_number]'" x-model="row.batch_number" placeholder="Otomatis bila kosong" class="form-input font-mono text-xs">
+                                <label class="form-label" :for="'batch-number-' + i">No. batch</label>
+                                <input :id="'batch-number-' + i" type="text" :name="'rows[' + i + '][batch_number]'" x-model="row.batch_number" placeholder="Otomatis bila kosong" class="form-input font-mono text-xs">
                             </div>
 
                             <div class="sm:col-span-2" x-show="tipe !== 'penyesuaian'">
-                                <label class="form-label">Kedaluwarsa *</label>
-                                <input type="date" :name="'rows[' + i + '][tanggal_expired]'" x-model="row.tanggal_expired" class="form-input">
+                                <label class="form-label" :for="'expired-' + i">Kedaluwarsa *</label>
+                                <input :id="'expired-' + i" type="date" :name="'rows[' + i + '][tanggal_expired]'" x-model="row.tanggal_expired" class="form-input">
                             </div>
 
                             <div class="sm:col-span-2" x-show="tipe === 'penyesuaian'">
@@ -175,8 +176,8 @@
                             </div>
 
                             <div class="sm:col-span-2">
-                                <label class="form-label">Stok fisik *</label>
-                                <input type="number" min="0" :name="'rows[' + i + '][stok_fisik]'" x-model.number="row.stok_fisik" required class="form-input text-right">
+                                <label class="form-label" :for="'fisik-' + i">Stok fisik *</label>
+                                <input :id="'fisik-' + i" type="number" min="0" :name="'rows[' + i + '][stok_fisik]'" x-model.number="row.stok_fisik" required class="form-input text-right">
                             </div>
 
                             <div class="sm:col-span-2">
