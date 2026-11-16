@@ -1,6 +1,8 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
 import modal from './components/modal';
+import opnameForm from './components/docForm';
+import { initAll, observe } from './services/tomselect';
 
 Alpine.store('ui', {
     sidebarOpen: window.innerWidth >= 1024,
@@ -53,6 +55,12 @@ Alpine.data('dropdown', () => ({
 }));
 
 Alpine.data('modal', modal);
+Alpine.data('opnameForm', opnameForm);
 
 window.Alpine = Alpine;
 Alpine.start();
+
+// TomSelect: enhance semua <select> setelah Alpine mengisi nilai awal
+// (agar x-model + TomSelect sinkron), lalu awasi select dinamis.
+initAll();
+observe();

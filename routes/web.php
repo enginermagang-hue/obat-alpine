@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\LookupController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CetakObatExcelController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Master\SupplierController;
 use App\Http\Controllers\Master\UserController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\Stok\BatchController;
+use App\Http\Controllers\Stok\OpnameController;
 use App\Http\Controllers\Stok\RiwayatStokController;
 use App\Http\Controllers\Stok\StokFaskesController;
 use App\Http\Controllers\Stok\StokGudangController;
@@ -73,4 +75,13 @@ Route::middleware('auth')->group(function (): void {
     Route::resource('batch', BatchController::class)->only('index');
 
     Route::resource('riwayat-stok', RiwayatStokController::class)->only('index');
+
+    Route::patch('opname/{opname}/reopen', [OpnameController::class, 'reopen'])->name('opname.reopen');
+    Route::resource('opname', OpnameController::class);
+
+    Route::prefix('api')->middleware('throttle:60,1')->group(function (): void {
+        Route::get('obat/search', [LookupController::class, 'obat'])->name('api.obat.search');
+        Route::get('batch', [LookupController::class, 'batch'])->name('api.batch');
+        Route::get('stok-sistem', [LookupController::class, 'stokSistem'])->name('api.stok-sistem');
+    });
 });

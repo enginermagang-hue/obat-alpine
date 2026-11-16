@@ -295,6 +295,20 @@ class StokService
                     fasilitasId: $opname->fasilitas_id,
                     jumlah: $selisih,
                 );
+            } elseif ($selisih < 0 && $detail->batch_number && $detail->tanggal_expired) {
+                // Kembalikan batch yang dikurangi saat opname selesai.
+                $batch = $this->tambahBatch(
+                    obatId: $detail->obat_id,
+                    batchNumber: $detail->batch_number,
+                    tanggalExpired: $detail->tanggal_expired,
+                    fasilitasId: $opname->fasilitas_id,
+                    jumlah: abs($selisih),
+                    tanggalMasuk: now(),
+                );
+
+                if ($batch->status === 'dimusnahkan' && $batch->jumlah > 0) {
+                    $batch->update(['status' => 'tersedia']);
+                }
             }
 
             $this->catatRiwayat(
