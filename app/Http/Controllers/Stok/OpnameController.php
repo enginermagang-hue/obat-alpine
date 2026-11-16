@@ -8,6 +8,7 @@ use App\Http\Requests\OpnameRequest;
 use App\Models\BatchStok;
 use App\Models\FasilitasKesehatan;
 use App\Models\OpnameStok;
+use App\Models\RiwayatStok;
 use App\Models\StokFaskes;
 use App\Models\StokGudang;
 use App\Services\StokService;
@@ -101,7 +102,7 @@ class OpnameController extends Controller
 
         $opname->loadMissing(['fasilitas:id,nama,tipe', 'user:id,name', 'details.obat:id,kode_obat,nama_obat,satuan', 'details.batch:id,batch_number']);
 
-        $riwayat = \App\Models\RiwayatStok::query()
+        $riwayat = RiwayatStok::query()
             ->with(['user:id,name', 'obat:id,nama_obat', 'fasilitas:id,nama'])
             ->where('referensi_type', OpnameStok::class)
             ->where('referensi_id', $opname->id)

@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\FasilitasKesehatan;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Batas akses data per fasilitas kesehatan.
@@ -35,5 +36,22 @@ class FaskesAccess
         }
 
         return array_values(array_unique($ids));
+    }
+
+    /**
+     * Batasi query ke faskes yang boleh dilihat user.
+     *
+     * User dinas/gudang (tanpa faskes) melihat semua → query tidak diubah.
+     * Return false bila user faskes tidak punya akses ke mana pun (hasil kosong).
+     */
+    public static function scopeQuery(Builder $query, ?User $user = null, string $column = 'fasilitas_id'): Builder
+    {
+        $user ??= auth()->user();
+
+        if (! $user || blank($user->fasilitas_kesehatan_id)) {
+            return $query;
+        }
+
+        return $query->whereIn($column, static::visibleFasilitasIds($user));
     }
 }

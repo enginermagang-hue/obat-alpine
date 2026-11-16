@@ -57,21 +57,28 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Filter menu berdasarkan route yang tersedia dan role user.
+     * Filter menu berdasarkan route tersedia, role, dan permission user.
+     *
+     * Daftar permission diambil sekali per request (bukan hasPermissionTo per
+     * item) agar nama permission yang belum ada tidak melempar exception.
      *
      * @return array<int, array{label: string|null, items: array<int, array<string, mixed>>}>
      */
     private function navigation(User $user): array
     {
         $isSuperAdmin = $user->hasRole('super_admin');
+        $permissions = $user->getAllPermissions()->pluck('name');
 
         return collect(config('navigation'))
-            ->map(function (array $section) use ($user, $isSuperAdmin): array {
+            ->map(function (array $section) use ($user, $isSuperAdmin, $permissions): array {
                 $items = collect($section['items'])
                     ->filter(fn (array $item): bool => Route::has($item['route']))
                     ->filter(fn (array $item): bool => $isSuperAdmin
                         || $item['roles'] === []
                         || $user->hasAnyRole($item['roles']))
+                    ->filter(fn (array $item): bool => $isSuperAdmin
+                        || blank($item['permission'] ?? null)
+                        || $permissions->contains($item['permission']))
                     ->values()
                     ->all();
 

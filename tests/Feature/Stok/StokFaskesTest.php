@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Stok;
 
+use App\Models\BatchStok;
 use App\Models\FasilitasKesehatan;
+use App\Models\Obat;
 use App\Models\StokFaskes;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
@@ -40,8 +42,8 @@ class StokFaskesTest extends TestCase
     {
         $faskesA = FasilitasKesehatan::factory()->create();
         $faskesB = FasilitasKesehatan::factory()->create();
-        $obatA = \App\Models\Obat::factory()->create(['nama_obat' => 'Obat Milik Alfa Unik']);
-        $obatB = \App\Models\Obat::factory()->create(['nama_obat' => 'Obat Milik Beta Unik']);
+        $obatA = Obat::factory()->create(['nama_obat' => 'Obat Milik Alfa Unik']);
+        $obatB = Obat::factory()->create(['nama_obat' => 'Obat Milik Beta Unik']);
         StokFaskes::create(['fasilitas_id' => $faskesA->id, 'obat_id' => $obatA->id, 'jumlah' => 10]);
         StokFaskes::create(['fasilitas_id' => $faskesB->id, 'obat_id' => $obatB->id, 'jumlah' => 20]);
 
@@ -57,7 +59,7 @@ class StokFaskesTest extends TestCase
     {
         $faskesA = FasilitasKesehatan::factory()->create();
         $faskesB = FasilitasKesehatan::factory()->create();
-        $obat = \App\Models\Obat::factory()->create();
+        $obat = Obat::factory()->create();
         StokFaskes::create(['fasilitas_id' => $faskesB->id, 'obat_id' => $obat->id, 'jumlah' => 5]);
 
         $user = $this->userWithRole('puskesmas', ['fasilitas_kesehatan_id' => $faskesA->id]);
@@ -70,9 +72,9 @@ class StokFaskesTest extends TestCase
     public function test_show_dapat_diakses_dan_filter_expiry(): void
     {
         $faskes = FasilitasKesehatan::factory()->create();
-        $obat = \App\Models\Obat::factory()->create();
+        $obat = Obat::factory()->create();
         StokFaskes::create(['fasilitas_id' => $faskes->id, 'obat_id' => $obat->id, 'jumlah' => 15]);
-        \App\Models\BatchStok::factory()->create([
+        BatchStok::factory()->create([
             'obat_id' => $obat->id,
             'fasilitas_id' => $faskes->id,
             'batch_number' => 'BTH-FSK-1',

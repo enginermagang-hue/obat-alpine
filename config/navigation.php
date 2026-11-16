@@ -3,8 +3,9 @@
 /**
  * Definisi menu sidebar.
  *
- * Item hanya dirender bila route-nya sudah ada (`Route::has`), sehingga menu
- * tumbuh otomatis seiring modul ditambahkan. `roles` kosong = semua user login.
+ * Item hanya dirender bila route-nya sudah ada (`Route::has`) DAN user punya
+ * permission yang diminta (`permission` opsional). `roles` kosong = semua
+ * user login; bila diisi, user harus punya salah satu role tersebut.
  */
 return [
     [
@@ -16,21 +17,21 @@ return [
     [
         'label' => 'Master Data',
         'items' => [
-            ['label' => 'Obat', 'route' => 'obat.index', 'icon' => 'beaker', 'roles' => ['super_admin', 'admin_gudang', 'admin_dinas']],
-            ['label' => 'Fasilitas Kesehatan', 'route' => 'fasilitas.index', 'icon' => 'building-office-2', 'roles' => ['super_admin', 'admin_dinas']],
-            ['label' => 'Sumber Dana', 'route' => 'sumber-dana.index', 'icon' => 'banknotes', 'roles' => ['super_admin', 'admin_dinas']],
-            ['label' => 'Supplier', 'route' => 'supplier.index', 'icon' => 'truck', 'roles' => ['super_admin', 'admin_gudang']],
-            ['label' => 'Pengguna & Role', 'route' => 'users.index', 'icon' => 'users', 'roles' => ['super_admin', 'admin_dinas']],
+            ['label' => 'Obat', 'route' => 'obat.index', 'icon' => 'beaker', 'roles' => ['super_admin', 'admin_gudang', 'admin_dinas'], 'permission' => 'view_obat'],
+            ['label' => 'Fasilitas Kesehatan', 'route' => 'fasilitas.index', 'icon' => 'building-office-2', 'roles' => ['super_admin', 'admin_dinas'], 'permission' => 'view_fasilitas_kesehatan'],
+            ['label' => 'Sumber Dana', 'route' => 'sumber-dana.index', 'icon' => 'banknotes', 'roles' => ['super_admin', 'admin_dinas'], 'permission' => 'view_sumber_dana'],
+            ['label' => 'Supplier', 'route' => 'supplier.index', 'icon' => 'truck', 'roles' => ['super_admin', 'admin_gudang'], 'permission' => 'view_suppliers'],
+            ['label' => 'Pengguna & Role', 'route' => 'users.index', 'icon' => 'users', 'roles' => ['super_admin', 'admin_dinas'], 'permission' => 'view_users'],
         ],
     ],
     [
         'label' => 'Stok',
         'items' => [
-            ['label' => 'Stok Gudang', 'route' => 'stok-gudang.index', 'icon' => 'archive-box', 'roles' => ['super_admin', 'admin_gudang', 'admin_dinas']],
-            ['label' => 'Stok Faskes', 'route' => 'stok-faskes.index', 'icon' => 'building-storefront', 'roles' => []],
-            ['label' => 'Batch', 'route' => 'batch.index', 'icon' => 'queue-list', 'roles' => []],
-            ['label' => 'Riwayat Stok', 'route' => 'riwayat-stok.index', 'icon' => 'clock', 'roles' => []],
-            ['label' => 'Stok Opname', 'route' => 'opname.index', 'icon' => 'clipboard-document-check', 'roles' => []],
+            ['label' => 'Stok Gudang', 'route' => 'stok-gudang.index', 'icon' => 'archive-box', 'roles' => ['super_admin', 'admin_gudang', 'admin_dinas'], 'permission' => 'view_stok_gudang'],
+            ['label' => 'Stok Faskes', 'route' => 'stok-faskes.index', 'icon' => 'building-storefront', 'roles' => [], 'permission' => 'view_stok_faskes'],
+            ['label' => 'Batch', 'route' => 'batch.index', 'icon' => 'queue-list', 'roles' => [], 'permission' => 'view_batch_stok'],
+            ['label' => 'Riwayat Stok', 'route' => 'riwayat-stok.index', 'icon' => 'clock', 'roles' => [], 'permission' => 'view_riwayat_stok'],
+            ['label' => 'Stok Opname', 'route' => 'opname.index', 'icon' => 'clipboard-document-check', 'roles' => [], 'permission' => 'view_opname_stok'],
         ],
     ],
     [

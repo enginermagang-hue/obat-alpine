@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\FasilitasKesehatan;
 use App\Models\OpnameStok;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

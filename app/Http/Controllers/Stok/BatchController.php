@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Stok;
 use App\Http\Controllers\Controller;
 use App\Models\BatchStok;
 use App\Models\FasilitasKesehatan;
-use App\Models\Obat;
+use App\Models\User;
 use App\Support\FaskesAccess;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -74,7 +74,7 @@ class BatchController extends Controller
     /**
      * @return array<string, int|float>
      */
-    private function kpi(\App\Models\User $user): array
+    private function kpi(User $user): array
     {
         $today = now()->toDateString();
         $base = fn () => FaskesAccess::scopeQuery(BatchStok::query()->where('jumlah', '>', 0), $user);

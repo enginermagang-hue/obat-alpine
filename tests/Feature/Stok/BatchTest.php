@@ -4,6 +4,7 @@ namespace Tests\Feature\Stok;
 
 use App\Models\BatchStok;
 use App\Models\FasilitasKesehatan;
+use App\Models\Obat;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -43,7 +44,7 @@ class BatchTest extends TestCase
     {
         $induk = FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
         $pustu = FasilitasKesehatan::factory()->pustu($induk->id)->create();
-        $obat = \App\Models\Obat::factory()->create(['nama_obat' => 'Obat Batch Pustu']);
+        $obat = Obat::factory()->create(['nama_obat' => 'Obat Batch Pustu']);
         BatchStok::factory()->create(['obat_id' => $obat->id, 'fasilitas_id' => $pustu->id, 'batch_number' => 'BTH-PUSTU-1']);
         BatchStok::factory()->create(['obat_id' => $obat->id, 'fasilitas_id' => $induk->id, 'batch_number' => 'BTH-INDUK-1']);
 
@@ -59,7 +60,7 @@ class BatchTest extends TestCase
     {
         $faskesA = FasilitasKesehatan::factory()->create();
         $faskesB = FasilitasKesehatan::factory()->create();
-        $obat = \App\Models\Obat::factory()->create(['nama_obat' => 'Obat Batch Alfa']);
+        $obat = Obat::factory()->create(['nama_obat' => 'Obat Batch Alfa']);
         BatchStok::factory()->create(['obat_id' => $obat->id, 'fasilitas_id' => $faskesA->id, 'batch_number' => 'BTH-MILIK-A']);
         BatchStok::factory()->create(['obat_id' => $obat->id, 'fasilitas_id' => $faskesB->id, 'batch_number' => 'BTH-MILIK-B']);
 

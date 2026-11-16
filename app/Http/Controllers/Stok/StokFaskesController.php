@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Stok;
 use App\Http\Controllers\Controller;
 use App\Models\BatchStok;
 use App\Models\FasilitasKesehatan;
+use App\Models\Obat;
 use App\Models\RiwayatStok;
 use App\Models\StokFaskes;
+use App\Models\User;
 use App\Services\KalkulasiStokMinimumService;
 use App\Support\FaskesAccess;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -64,7 +66,7 @@ class StokFaskesController extends Controller
             'filters' => $filters,
             'lockedFaskes' => $lockedFaskes,
             'faskesList' => FaskesAccess::scopeQuery(FasilitasKesehatan::query()->orderBy('nama'), $user)->get(['id', 'nama']),
-            'kategoriList' => \App\Models\Obat::query()->distinct()->orderBy('kategori')->pluck('kategori'),
+            'kategoriList' => Obat::query()->distinct()->orderBy('kategori')->pluck('kategori'),
             'kpi' => $this->kpi($user),
         ]);
     }
@@ -123,7 +125,7 @@ class StokFaskesController extends Controller
     /**
      * @return array<string, int>
      */
-    private function kpi(\App\Models\User $user): array
+    private function kpi(User $user): array
     {
         $base = fn () => FaskesAccess::scopeQuery(StokFaskes::query(), $user);
 

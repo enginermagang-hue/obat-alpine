@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Stok;
 
+use App\Models\BatchStok;
+use App\Models\Obat;
 use App\Models\StokGudang;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
@@ -45,8 +47,8 @@ class StokGudangTest extends TestCase
     public function test_filter_status_habis(): void
     {
         $user = $this->userWithRole('admin_gudang');
-        StokGudang::create(['obat_id' => \App\Models\Obat::factory()->create(['nama_obat' => 'Obat Habis Unik'])->id, 'jumlah' => 0, 'stok_minimum' => 10]);
-        StokGudang::create(['obat_id' => \App\Models\Obat::factory()->create(['nama_obat' => 'Obat Ada Unik'])->id, 'jumlah' => 100, 'stok_minimum' => 10]);
+        StokGudang::create(['obat_id' => Obat::factory()->create(['nama_obat' => 'Obat Habis Unik'])->id, 'jumlah' => 0, 'stok_minimum' => 10]);
+        StokGudang::create(['obat_id' => Obat::factory()->create(['nama_obat' => 'Obat Ada Unik'])->id, 'jumlah' => 100, 'stok_minimum' => 10]);
 
         $response = $this->actingAs($user)->get('/stok-gudang?status_stok=habis');
 
@@ -56,8 +58,8 @@ class StokGudangTest extends TestCase
 
     public function test_show_menampilkan_batch(): void
     {
-        $obat = \App\Models\Obat::factory()->create();
-        \App\Models\BatchStok::factory()->create(['obat_id' => $obat->id, 'fasilitas_id' => null, 'batch_number' => 'BTH-SHOW-1']);
+        $obat = Obat::factory()->create();
+        BatchStok::factory()->create(['obat_id' => $obat->id, 'fasilitas_id' => null, 'batch_number' => 'BTH-SHOW-1']);
 
         $this->actingAs($this->userWithRole('admin_gudang'))
             ->get("/stok-gudang/{$obat->id}")
