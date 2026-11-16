@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\LogsActivity;
+use App\Services\NomorFormatService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,21 @@ class DistribusiObat extends Model
     use LogsActivity;
 
     protected $table = 'distribusi_obat';
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (self $record) {
+            if (blank($record->nomor_surat_jalan)) {
+                $record->nomor_surat_jalan = NomorFormatService::generate(
+                    'distribusi_obat',
+                    $record->fasilitas_pengirim_id,
+                    $record->tanggal_kirim?->format('Y-m-d'),
+                );
+            }
+        });
+    }
 
     protected $fillable = [
         'nomor_surat_jalan',

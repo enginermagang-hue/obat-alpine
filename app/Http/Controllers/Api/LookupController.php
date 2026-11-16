@@ -101,4 +101,40 @@ class LookupController extends Controller
 
         return response()->json(['jumlah' => (int) ($jumlah ?? 0)]);
     }
+
+    /**
+     * Preview alokasi batch (FEFO/FIFO/LIFO) untuk form distribusi.
+     * Server mengalokasikan ulang saat submit; respons ini hanya tampilan.
+     */
+    public function alokasi(Request $request, FefoService $fefo): JsonResponse
+    {
+        $data = $request->validate([
+            'obat_id' => ['required', 'integer', 'exists:obat,id'],
+            'jumlah' => ['required', 'integer', 'min:1'],
+            'fasilitas_id' => ['nullable', 'integer', 'exists:fasilitas_kesehatan,id'],
+        ]);
+
+        $fasilitasId = $data['fasilitas_id'] ?? null;
+
+        if (filled($request->user()->fasilitas_kesehatan_id)
+            && ! in_array($fasilitasId, FaskesAccess::visibleFasilitasIds($request->user()), true)) {
+            return response()->json(['message' => 'Faskes di luar wewenang.'], 403);
+        }
+
+        $obat = Obat::find($data['obat_id']);
+        $metode = $obat->metode_stok->value ?? 'fefo';
+
+        $alokasi = $fefo->allocate($data['obat_id'], $data['jumlah'], $fasilitasId, $metode);
+
+        $batches = BatchStok::whereKey(collect($alokasi)->pluck('batch_id'))->get()->keyBy('id');
+
+        return response()->json(
+            collect($alokasi)->map(fn (array $item) => [
+                'batch_id' => $item['batch_id'],
+                'jumlah' => $item['jumlah'],
+                'batch_number' => $batches->get($item['batch_id'])?->batch_number,
+                'tanggal_expired' => $batches->get($item['batch_id'])?->tanggal_expired?->format('Y-m-d'),
+            ])->values()
+        );
+    }
 }

@@ -1,20 +1,21 @@
 /**
- * Form transaksi multi-baris (penerimaan & permintaan).
+ * Form transaksi multi-baris (penerimaan, permintaan, distribusi).
  *
  * - rows: [{ obat_id, obat_label, jumlah, harga_satuan, batch_number,
- *             tanggal_expired, keterangan, batches: [], obatOpen, obatLoading }]
- * - Penerimaan: obat dicari via fetch; no batch otomatis/manual + expired
- *   diisi manual (barang baru masuk).
+ *             tanggal_expired, keterangan, batches: [], alokasi: [],
+ *             obatOpen, obatLoading }]
+ * - Penerimaan: obat dicari via fetch; no batch + expired diisi manual.
  * - Permintaan: hanya obat + jumlah diminta + catatan.
+ * - Distribusi: obat + jumlah; batch dialokasikan server (FEFO/FIFO/LIFO),
+ *   preview via loadAlokasi().
  * - subtotal(i) dan grandTotal dihitung di klien untuk tampilan;
  *   server menghitung ulang saat simpan.
- *
- * Struktur mirip opnameForm (docForm.js) agar konsisten.
  */
 export default ({
     obatUrl,
     batchUrl = null,
     stokUrl = null,
+    alokasiUrl = null,
     fasilitasId = null,
     initialRows = [],
     withBatch = false,
@@ -23,6 +24,8 @@ export default ({
     fasilitasId,
     withBatch,
     withPrice,
+    alokasiUrl,
+    alokasiLoading: false,
     rows: initialRows.length ? initialRows.map((r) => ({ ...emptyRow(), ...r })) : [emptyRow()],
 
     addRow() {
@@ -105,7 +108,41 @@ export default ({
         }
     },
 
+    /**
+     * Muat preview alokasi batch per baris (dipakai form distribusi).
+     * Server mengalokasikan ulang saat submit; ini hanya tampilan.
+     */
+    async loadAlokasi() {
+        if (!this.alokasiUrl) return;
+        this.alokasiLoading = true;
+        try {
+            for (let i = 0; i < this.rows.length; i++) {
+                const row = this.rows[i];
+                row.alokasi = [];
+                if (!row.obat_id || !(Number(row.jumlah) > 0)) continue;
+                const params = new URLSearchParams({ obat_id: row.obat_id, jumlah: row.jumlah });
+                if (this.fasilitasId) params.set('fasilitas_id', this.fasilitasId);
+                const res = await fetch(`${this.alokasiUrl}?${params}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                row.alokasi = res.ok ? await res.json() : [];
+            }
+        } finally {
+            this.alokasiLoading = false;
+        }
+    },
+
     async init() {
+        // Normalisasi alias antar modul ke bentuk baku
+        // { obat_id, jumlah, keterangan, batch_*, harga_satuan, ... }.
+        for (const row of this.rows) {
+            if (row.jumlah_diminta !== undefined && (row.jumlah === undefined || row.jumlah === 0)) {
+                row.jumlah = row.jumlah_diminta;
+            }
+            if (row.catatan !== undefined && (row.keterangan === undefined || row.keterangan === '')) {
+                row.keterangan = row.catatan;
+            }
+        }
         for (let i = 0; i < this.rows.length; i++) {
             const row = this.rows[i];
             if (!row.obat_id || !this.withBatch) continue;
@@ -128,6 +165,7 @@ function emptyRow() {
         obatLoading: false,
         obatResults: [],
         batches: [],
+        alokasi: [],
         batch_id: '',
         batch_number: '',
         tanggal_expired: '',
