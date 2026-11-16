@@ -7,7 +7,9 @@ use App\Http\Requests\UserRequest;
 use App\Models\FasilitasKesehatan;
 use App\Models\PenerimaanStok;
 use App\Models\User;
+use App\Support\TableMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +21,7 @@ class UserController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', User::class);
 
@@ -35,13 +37,30 @@ class UserController extends Controller
         $query->when($filters['role'] ?? null, fn ($q, $v) => $q->whereHas('roles', fn ($q) => $q->where('name', $v)));
         $query->when($filters['faskes'] ?? null, fn ($q, $v) => $q->where('fasilitas_kesehatan_id', $v));
 
-        $perPage = (int) ($request->user()->preferences->items_per_halaman ?? 10);
+        $sorts = ['name' => 'name', 'email' => 'email'];
+        $sort = $sorts[$request->query('sort')] ?? 'name';
+        $sortDir = $request->query('sortDir') === 'desc' ? 'desc' : 'asc';
+
+        $perPage = (int) $request->query('per_page', $request->user()->preferences->items_per_halaman ?? 10);
         $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
 
-        $users = $query->orderBy('name')->paginate($perPage)->withQueryString();
+        $users = $query->orderBy($sort, $sortDir)->paginate($perPage)->withQueryString();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $users->items(),
+                'meta' => TableMeta::from($users),
+            ]);
+        }
 
         return view('master.users.index', [
-            'users' => $users,
+            'initial' => [
+                'data' => $users->items(),
+                'meta' => TableMeta::from($users),
+                'filters' => $filters,
+                'sort' => $request->query('sort'),
+                'sortDir' => $sortDir,
+            ],
             'filters' => $filters,
             'roles' => Role::orderBy('name')->get(['id', 'name']),
             'faskesList' => FasilitasKesehatan::query()->orderBy('nama')->get(['id', 'nama']),

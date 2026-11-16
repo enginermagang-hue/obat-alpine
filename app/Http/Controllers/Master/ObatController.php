@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ObatRequest;
 use App\Models\Obat;
+use App\Support\TableMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,11 +17,14 @@ class ObatController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', Obat::class);
 
         $filters = $request->only(['search', 'kategori', 'bentuk', 'ven', 'status', 'metode']);
+        $sorts = ['kode_obat' => 'kode_obat', 'nama_obat' => 'nama_obat', 'harga_satuan' => 'harga_satuan'];
+        $sort = $sorts[$request->query('sort')] ?? 'kode_obat';
+        $sortDir = $request->query('sortDir') === 'desc' ? 'desc' : 'asc';
 
         $query = Obat::query();
 
@@ -36,10 +41,17 @@ class ObatController extends Controller
         $query->when($filters['status'] ?? null, fn ($q, $v) => $q->where('status', $v));
         $query->when($filters['metode'] ?? null, fn ($q, $v) => $q->where('metode_stok', $v));
 
-        $perPage = (int) ($request->user()->preferences->items_per_halaman ?? 10);
+        $perPage = (int) $request->query('per_page', $request->user()->preferences->items_per_halaman ?? 10);
         $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
 
-        $obat = $query->orderBy('kode_obat')->paginate($perPage)->withQueryString();
+        $obat = $query->orderBy($sort, $sortDir)->paginate($perPage)->withQueryString();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $obat->items(),
+                'meta' => TableMeta::from($obat),
+            ]);
+        }
 
         $importRow = DB::table('imports')
             ->where('importer', 'obat')
@@ -48,7 +60,13 @@ class ObatController extends Controller
             ->first();
 
         return view('master.obat.index', [
-            'obat' => $obat,
+            'initial' => [
+                'data' => $obat->items(),
+                'meta' => TableMeta::from($obat),
+                'filters' => $filters,
+                'sort' => $request->query('sort'),
+                'sortDir' => $sortDir,
+            ],
             'filters' => $filters,
             'kategoriList' => Obat::query()->distinct()->orderBy('kategori')->pluck('kategori'),
             'importStatus' => $importRow ? (array) $importRow : null,

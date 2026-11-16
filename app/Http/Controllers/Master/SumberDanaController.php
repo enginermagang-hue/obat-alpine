@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SumberDanaRequest;
 use App\Models\SumberDana;
+use App\Support\TableMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,11 +16,14 @@ class SumberDanaController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', SumberDana::class);
 
         $filters = $request->only(['search', 'tahun', 'status']);
+        $sorts = ['kode' => 'kode', 'nama' => 'nama', 'tahun' => 'tahun', 'total_anggaran' => 'total_anggaran'];
+        $sort = $sorts[$request->query('sort')] ?? null;
+        $sortDir = $request->query('sortDir') === 'desc' ? 'desc' : 'asc';
 
         $query = SumberDana::query();
 
@@ -30,13 +35,32 @@ class SumberDanaController extends Controller
         $query->when($filters['tahun'] ?? null, fn ($q, $v) => $q->where('tahun', $v));
         $query->when($filters['status'] ?? null, fn ($q, $v) => $q->where('status', $v));
 
-        $perPage = (int) ($request->user()->preferences->items_per_halaman ?? 10);
+        $perPage = (int) $request->query('per_page', $request->user()->preferences->items_per_halaman ?? 10);
         $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
 
-        $dana = $query->orderByDesc('tahun')->orderBy('kode')->paginate($perPage)->withQueryString();
+        if ($sort) {
+            $query->orderBy($sort, $sortDir);
+        } else {
+            $query->orderByDesc('tahun')->orderBy('kode');
+        }
+
+        $dana = $query->paginate($perPage)->withQueryString();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $dana->items(),
+                'meta' => TableMeta::from($dana),
+            ]);
+        }
 
         return view('master.sumber-dana.index', [
-            'dana' => $dana,
+            'initial' => [
+                'data' => $dana->items(),
+                'meta' => TableMeta::from($dana),
+                'filters' => $filters,
+                'sort' => $request->query('sort'),
+                'sortDir' => $sortDir,
+            ],
             'filters' => $filters,
             'tahunList' => SumberDana::query()->distinct()->orderByDesc('tahun')->pluck('tahun'),
         ]);

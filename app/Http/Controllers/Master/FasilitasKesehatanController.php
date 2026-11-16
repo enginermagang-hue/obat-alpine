@@ -8,7 +8,9 @@ use App\Models\BatchStok;
 use App\Models\FasilitasKesehatan;
 use App\Models\PenerimaanStok;
 use App\Models\User;
+use App\Support\TableMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,11 +19,14 @@ class FasilitasKesehatanController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', FasilitasKesehatan::class);
 
         $filters = $request->only(['search', 'tipe', 'status']);
+        $sorts = ['kode_faskes' => 'kode_faskes', 'nama' => 'nama'];
+        $sort = $sorts[$request->query('sort')] ?? 'nama';
+        $sortDir = $request->query('sortDir') === 'desc' ? 'desc' : 'asc';
 
         $query = FasilitasKesehatan::query()->with('puskesmasInduk:id,nama');
 
@@ -34,13 +39,26 @@ class FasilitasKesehatanController extends Controller
         $query->when($filters['tipe'] ?? null, fn ($q, $v) => $q->where('tipe', $v));
         $query->when($filters['status'] ?? null, fn ($q, $v) => $q->where('status', $v));
 
-        $perPage = (int) ($request->user()->preferences->items_per_halaman ?? 10);
+        $perPage = (int) $request->query('per_page', $request->user()->preferences->items_per_halaman ?? 10);
         $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
 
-        $faskes = $query->orderBy('nama')->paginate($perPage)->withQueryString();
+        $faskes = $query->orderBy($sort, $sortDir)->paginate($perPage)->withQueryString();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $faskes->items(),
+                'meta' => TableMeta::from($faskes),
+            ]);
+        }
 
         return view('master.fasilitas.index', [
-            'faskes' => $faskes,
+            'initial' => [
+                'data' => $faskes->items(),
+                'meta' => TableMeta::from($faskes),
+                'filters' => $filters,
+                'sort' => $request->query('sort'),
+                'sortDir' => $sortDir,
+            ],
             'filters' => $filters,
             'puskesmasList' => FasilitasKesehatan::query()
                 ->where('tipe', 'puskesmas')

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SupplierRequest;
 use App\Models\Supplier;
+use App\Support\TableMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,7 +16,7 @@ class SupplierController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', Supplier::class);
 
@@ -30,13 +32,30 @@ class SupplierController extends Controller
 
         $query->when($filters['status'] ?? null, fn ($q, $v) => $q->where('status', $v));
 
-        $perPage = (int) ($request->user()->preferences->items_per_halaman ?? 10);
+        $sorts = ['nama' => 'nama'];
+        $sort = $sorts[$request->query('sort')] ?? 'nama';
+        $sortDir = $request->query('sortDir') === 'desc' ? 'desc' : 'asc';
+
+        $perPage = (int) $request->query('per_page', $request->user()->preferences->items_per_halaman ?? 10);
         $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
 
-        $suppliers = $query->orderBy('nama')->paginate($perPage)->withQueryString();
+        $suppliers = $query->orderBy($sort, $sortDir)->paginate($perPage)->withQueryString();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $suppliers->items(),
+                'meta' => TableMeta::from($suppliers),
+            ]);
+        }
 
         return view('master.supplier.index', [
-            'suppliers' => $suppliers,
+            'initial' => [
+                'data' => $suppliers->items(),
+                'meta' => TableMeta::from($suppliers),
+                'filters' => $filters,
+                'sort' => $request->query('sort'),
+                'sortDir' => $sortDir,
+            ],
             'filters' => $filters,
         ]);
     }

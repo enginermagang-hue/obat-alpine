@@ -34,10 +34,16 @@ class UserTest extends TestCase
         User::factory()->create(['name' => 'Petugas Puskesmas'])->assignRole('puskesmas');
         User::factory()->create(['name' => 'Staf Gudang'])->assignRole('admin_gudang');
 
-        $response = $this->actingAs($admin)->get('/users?role=puskesmas');
+        $this->actingAs($admin)
+            ->get('/users')
+            ->assertOk()
+            ->assertSee('Pengguna &amp; Role', false);
 
-        $response->assertOk()->assertSee('Petugas Puskesmas');
-        $response->assertDontSee('Staf Gudang', false);
+        $response = $this->actingAs($admin)->getJson('/users?role=puskesmas');
+
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('Petugas Puskesmas', $response->json('data.0.name'));
     }
 
     public function test_index_ditolak_untuk_admin_gudang(): void

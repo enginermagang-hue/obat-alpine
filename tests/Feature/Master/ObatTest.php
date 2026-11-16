@@ -31,12 +31,40 @@ class ObatTest extends TestCase
     public function test_index_dapat_diakses_admin_gudang(): void
     {
         $user = $this->userWithRole('admin_gudang');
-        Obat::factory()->create(['nama_obat' => 'Paracetamol 500 mg']);
 
         $this->actingAs($user)
             ->get('/obat')
             ->assertOk()
-            ->assertSee('Paracetamol 500 mg');
+            ->assertSee('Master data obat', false);
+    }
+
+    public function test_tabel_json_filter_search(): void
+    {
+        $user = $this->userWithRole('admin_gudang');
+        Obat::factory()->create(['nama_obat' => 'Paracetamol Sirup Unik']);
+        Obat::factory()->create(['nama_obat' => 'Amoxicillin Kapsul Unik']);
+
+        $response = $this->actingAs($user)->getJson('/obat?search=Paracetamol');
+
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('Paracetamol Sirup Unik', $response->json('data.0.nama_obat'));
+    }
+
+    public function test_tabel_json_sort_dan_per_page(): void
+    {
+        $user = $this->userWithRole('admin_gudang');
+        Obat::factory()->create(['kode_obat' => 'OBT-ZZZ', 'nama_obat' => 'Zulu']);
+        Obat::factory()->create(['kode_obat' => 'OBT-AAA', 'nama_obat' => 'Alpha']);
+
+        $response = $this->actingAs($user)->getJson('/obat?sort=nama_obat&sortDir=desc&per_page=25');
+
+        $response->assertOk();
+        $this->assertSame(25, $response->json('meta.per_page'));
+        $this->assertSame('Zulu', $response->json('data.0.nama_obat'));
+
+        $response = $this->actingAs($user)->getJson('/obat?per_page=999');
+        $this->assertSame(10, $response->json('meta.per_page'));
     }
 
     public function test_index_ditolak_untuk_puskesmas(): void
@@ -181,9 +209,10 @@ class ObatTest extends TestCase
         Obat::factory()->create(['nama_obat' => 'Paracetamol Sirup']);
         Obat::factory()->create(['nama_obat' => 'Amoxicillin Kapsul']);
 
-        $response = $this->actingAs($user)->get('/obat?search=Paracetamol');
+        $response = $this->actingAs($user)->getJson('/obat?search=Paracetamol');
 
-        $response->assertOk()->assertSee('Paracetamol Sirup');
-        $this->assertStringNotContainsString('Amoxicillin Kapsul', $response->getContent());
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('Paracetamol Sirup', $response->json('data.0.nama_obat'));
     }
 }

@@ -34,10 +34,16 @@ class SumberDanaTest extends TestCase
         SumberDana::factory()->create(['kode' => 'DN-A', 'tahun' => 2025]);
         SumberDana::factory()->create(['kode' => 'DN-B', 'tahun' => 2026]);
 
-        $response = $this->actingAs($this->userWithRole('admin_dinas'))->get('/sumber-dana?tahun=2025');
+        $this->actingAs($this->userWithRole('admin_dinas'))
+            ->get('/sumber-dana')
+            ->assertOk()
+            ->assertSee('Sumber Dana', false);
 
-        $response->assertOk()->assertSee('DN-A');
-        $this->assertStringNotContainsString('DN-B', $response->getContent());
+        $response = $this->actingAs($this->userWithRole('admin_dinas'))->getJson('/sumber-dana?tahun=2025');
+
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('DN-A', $response->json('data.0.kode'));
     }
 
     public function test_store_menolak_kode_tahun_duplikat(): void

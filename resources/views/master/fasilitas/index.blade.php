@@ -19,11 +19,22 @@
         class="space-y-6"
         x-data="modal(@js(array_merge($formDefaults, old() ? collect(old())->only(array_keys($formDefaults))->toArray() : [])))"
         x-init="editing = @js(old('editing_id')); formOpen = @js($openForm)"
+        @faskes-create.window="openCreate()"
+        @faskes-edit.window="openEdit($event.detail)"
+        @faskes-confirm.window="openConfirm($event.detail)"
     >
+        <div
+            class="space-y-6"
+            x-data="dataTable({
+                url: '{{ route('fasilitas.index') }}',
+                initial: @js($initial),
+                filterKeys: ['search', 'tipe', 'status'],
+            })"
+        >
         <section class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap items-center gap-2">
                 @can('create', App\Models\FasilitasKesehatan::class)
-                    <button type="button" class="btn btn-primary" @click="openCreate()">
+                    <button type="button" class="btn btn-primary" @click="$dispatch('faskes-create')">
                         <x-heroicon-o-plus class="h-4 w-4" />
                         Tambah Faskes
                     </button>
@@ -32,99 +43,122 @@
         </section>
 
         <section class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <form method="GET" action="{{ route('fasilitas.index') }}" class="grid gap-3 px-5 py-4 sm:grid-cols-2 lg:grid-cols-5">
+            <form method="GET" action="{{ route('fasilitas.index') }}" @submit.prevent="applyFilter()" class="grid gap-3 px-5 py-4 sm:grid-cols-2 lg:grid-cols-5">
                 <div class="lg:col-span-2">
                     <input
                         type="search"
                         name="search"
-                        value="{{ $filters['search'] ?? '' }}"
+                        x-model="filters.search" @input.debounce.300ms="applyFilter()"
                         placeholder="Cari kode, nama, PIC…"
                         class="form-input"
                     >
                 </div>
 
-                <select name="tipe" class="form-select">
+                <select name="tipe" x-model="filters.tipe" @change="applyFilter()" class="form-select">
                     <option value="">Semua tipe</option>
-                    <option value="puskesmas" @selected(($filters['tipe'] ?? '') === 'puskesmas')>Puskesmas</option>
-                    <option value="pustu" @selected(($filters['tipe'] ?? '') === 'pustu')>Pustu</option>
+                    <option value="puskesmas">Puskesmas</option>
+                    <option value="pustu">Pustu</option>
                 </select>
 
-                <select name="status" data-tomselect-search="false" class="form-select">
+                <select name="status" x-model="filters.status" @change="applyFilter()" data-tomselect-search="false" class="form-select">
                     <option value="">Aktif + nonaktif</option>
-                    <option value="aktif" @selected(($filters['status'] ?? '') === 'aktif')>Aktif</option>
-                    <option value="nonaktif" @selected(($filters['status'] ?? '') === 'nonaktif')>Nonaktif</option>
+                    <option value="aktif">Aktif</option>
+                    <option value="nonaktif">Nonaktif</option>
                 </select>
 
                 <div class="flex gap-2 sm:col-span-2 lg:col-span-1">
                     <button type="submit" class="btn btn-dark">Terapkan</button>
-                    <a href="{{ route('fasilitas.index') }}" class="btn btn-ghost">Atur ulang</a>
+                    <button type="button" class="btn btn-ghost" @click="reset()">Atur ulang</button>
                 </div>
             </form>
+            <noscript>
+                <p class="px-5 pb-4 text-xs text-slate-500">Aktifkan JavaScript untuk filter & pagination tanpa reload.</p>
+            </noscript>
 
-            @if ($faskes->isEmpty())
-                <x-ui.empty-state title="Belum ada fasilitas" hint="Tambahkan puskesmas atau pustu." icon="building-office-2" />
-            @else
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
-                        <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
-                            <tr>
-                                <th class="px-5 py-3 font-medium">Kode</th>
-                                <th class="px-5 py-3 font-medium">Nama</th>
-                                <th class="px-5 py-3 font-medium">Tipe</th>
-                                <th class="px-5 py-3 font-medium">Induk / Kontak</th>
-                                <th class="px-5 py-3 font-medium">Status</th>
-                                <th class="px-5 py-3 text-right font-medium">Aksi</th>
+            <div x-show="error" x-cloak class="mx-5 mb-4 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+                <span x-text="error"></span>
+                <button type="button" class="font-medium underline" @click="load(meta.page)">Coba lagi</button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800" :class="{ 'opacity-50': loading }">
+                    <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
+                        <tr>
+                            <th class="px-5 py-3 font-medium">
+                                <button type="button" @click="setSort('kode_faskes')" class="uppercase tracking-wide hover:underline">
+                                    Kode <span x-show="sort === 'kode_faskes'" x-text="sortDir === 'asc' ? '↑' : '↓'"></span>
+                                </button>
+                            </th>
+                            <th class="px-5 py-3 font-medium">
+                                <button type="button" @click="setSort('nama')" class="uppercase tracking-wide hover:underline">
+                                    Nama <span x-show="sort === 'nama'" x-text="sortDir === 'asc' ? '↑' : '↓'"></span>
+                                </button>
+                            </th>
+                            <th class="px-5 py-3 font-medium">Tipe</th>
+                            <th class="px-5 py-3 font-medium">Induk / Kontak</th>
+                            <th class="px-5 py-3 font-medium">Status</th>
+                            <th class="px-5 py-3 text-right font-medium">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <template x-for="row in rows" :key="row.id">
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                                <td class="whitespace-nowrap px-5 py-3 font-mono text-xs text-slate-600 dark:text-slate-300" x-text="row.kode_faskes"></td>
+                                <td class="px-5 py-3">
+                                    <p class="font-medium text-slate-800 dark:text-slate-100" x-text="row.nama"></p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400" x-text="row.kepala_faskes || '—'"></p>
+                                </td>
+                                <td class="px-5 py-3">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                                        :class="row.tipe === 'puskesmas' ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300' : 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300'"
+                                        x-text="row.tipe === 'puskesmas' ? 'Puskesmas' : 'Pustu'"></span>
+                                </td>
+                                <td class="px-5 py-3 text-slate-600 dark:text-slate-300">
+                                    <p class="text-sm" x-text="row.puskesmas_induk ? row.puskesmas_induk.nama : (row.tipe === 'puskesmas' ? '—' : 'Tanpa induk')"></p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400" x-text="(row.pic || '—') + (row.telepon ? ' · ' + row.telepon : '')"></p>
+                                </td>
+                                <td class="px-5 py-3">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                                        :class="row.status === 'aktif' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'"
+                                        x-text="row.status === 'aktif' ? 'Aktif' : 'Nonaktif'"></span>
+                                </td>
+                                <td class="whitespace-nowrap px-5 py-3 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        @if (auth()->user()->hasPermissionTo('update_fasilitas_kesehatan'))
+                                            <button type="button" class="btn-icon" title="Ubah" @click="$dispatch('faskes-edit', row)">
+                                                <x-heroicon-o-pencil-square class="h-4 w-4" />
+                                            </button>
+                                            <button type="button" class="btn-icon btn-icon-warning" title="Nonaktifkan" x-show="row.status === 'aktif'"
+                                                @click="$dispatch('faskes-confirm', { title: 'Nonaktifkan faskes', message: 'Faskes ' + row.kode_faskes + ' tidak bisa dipakai transaksi baru.', action: '/fasilitas/' + row.id + '/deactivate', method: 'PATCH', label: 'Nonaktifkan' })">
+                                                <x-heroicon-o-eye-slash class="h-4 w-4" />
+                                            </button>
+                                        @endif
+                                        @if (auth()->user()->hasPermissionTo('delete_fasilitas_kesehatan'))
+                                            <button type="button" class="btn-icon btn-icon-danger" title="Hapus permanen"
+                                                @click="$dispatch('faskes-confirm', { title: 'Hapus faskes permanen', message: 'Ditolak bila faskes masih dipakai user, stok, pustu turunan, atau transaksi.', action: '/fasilitas/' + row.id, method: 'DELETE', label: 'Hapus' })">
+                                                <x-heroicon-o-trash class="h-4 w-4" />
+                                            </button>
+                                        @endif
+                                    </div>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                            @foreach ($faskes as $row)
-                                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                                    <td class="whitespace-nowrap px-5 py-3 font-mono text-xs text-slate-600 dark:text-slate-300">{{ $row->kode_faskes }}</td>
-                                    <td class="px-5 py-3">
-                                        <p class="font-medium text-slate-800 dark:text-slate-100">{{ $row->nama }}</p>
-                                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ $row->kepala_faskes ?? '—' }}</p>
-                                    </td>
-                                    <td class="px-5 py-3">
-                                        <x-ui.badge :tone="$row->tipe === 'puskesmas' ? 'brand' : 'violet'">{{ ucfirst($row->tipe) }}</x-ui.badge>
-                                    </td>
-                                    <td class="px-5 py-3 text-slate-600 dark:text-slate-300">
-                                        <p class="text-sm">{{ $row->puskesmasInduk?->nama ?? ($row->tipe === 'puskesmas' ? '—' : 'Tanpa induk') }}</p>
-                                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ $row->pic ?? '—' }}{{ $row->telepon ? ' · '.$row->telepon : '' }}</p>
-                                    </td>
-                                    <td class="px-5 py-3">
-                                        <x-ui.badge :tone="$row->status === 'aktif' ? 'emerald' : 'slate'">{{ $row->status === 'aktif' ? 'Aktif' : 'Nonaktif' }}</x-ui.badge>
-                                    </td>
-                                    <td class="whitespace-nowrap px-5 py-3 text-right">
-                                        <div class="flex items-center justify-end gap-1">
-                                            @can('update', $row)
-                                                <button type="button" class="btn-icon" title="Ubah"
-                                                    @click="openEdit(@js($row->only(['id', 'kode_faskes', 'nama', 'tipe', 'puskesmas_induk_id', 'alamat', 'pic', 'kontak_pic', 'telepon', 'kepala_faskes', 'status'])))">
-                                                    <x-heroicon-o-pencil-square class="h-4 w-4" />
-                                                </button>
-                                                @if ($row->status === 'aktif')
-                                                    <button type="button" class="btn-icon btn-icon-warning" title="Nonaktifkan"
-                                                        @click="openConfirm({ title: 'Nonaktifkan faskes', message: 'Faskes {{ $row->kode_faskes }} tidak bisa dipakai transaksi baru.', action: '{{ route('fasilitas.deactivate', $row) }}', method: 'PATCH', label: 'Nonaktifkan' })">
-                                                        <x-heroicon-o-eye-slash class="h-4 w-4" />
-                                                    </button>
-                                                @endif
-                                            @endcan
-                                            @can('delete', $row)
-                                                <button type="button" class="btn-icon btn-icon-danger" title="Hapus permanen"
-                                                    @click="openConfirm({ title: 'Hapus faskes permanen', message: 'Ditolak bila faskes masih dipakai user, stok, pustu turunan, atau transaksi.', action: '{{ route('fasilitas.destroy', $row) }}', method: 'DELETE', label: 'Hapus' })">
-                                                    <x-heroicon-o-trash class="h-4 w-4" />
-                                                </button>
-                                            @endcan
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        </template>
+                        <tr x-show="!loading && rows.length === 0">
+                            <td colspan="6" class="px-5 py-12 text-center">
+                                <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Tidak ada data yang cocok</p>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Ubah kata kunci atau atur ulang filter.</p>
+                            </td>
+                        </tr>
+                        <tr x-show="loading">
+                            <td colspan="6" class="px-5 py-12 text-center text-sm text-slate-500">Memuat…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                <x-ui.pagination :paginator="$faskes" />
-            @endif
+            <x-ui.table-pagination />
         </section>
+        </div>
 
         <x-ui.modal name="form" title="Data Faskes" :wide="true">
             <form :action="editing ? '/fasilitas/' + editing : '{{ route('fasilitas.store') }}'" method="POST" class="grid gap-4 sm:grid-cols-2">

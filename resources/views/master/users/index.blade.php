@@ -16,7 +16,19 @@
         class="space-y-6"
         x-data="modal(@js(array_merge($formDefaults, old() ? collect(old())->only(array_keys($formDefaults))->toArray() : [])))"
         x-init="editing = @js(old('editing_id')); formOpen = @js($openForm); resetOpen = @js((bool) $openReset); resetId = @js(old('reset_id')); resetEmail = @js(old('reset_email'))"
+        @user-create.window="openCreate()"
+        @user-edit.window="openEdit($event.detail)"
+        @user-confirm.window="openConfirm($event.detail)"
+        @user-reset.window="resetOpen = true; resetId = $event.detail.id; resetEmail = $event.detail.email"
     >
+        <div
+            class="space-y-6"
+            x-data="dataTable({
+                url: '{{ route('users.index') }}',
+                initial: @js($initial),
+                filterKeys: ['search', 'role', 'faskes'],
+            })"
+        >
         <section class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-1 dark:border-slate-800">
             <a href="{{ route('users.index') }}" class="rounded-t-lg border-b-2 border-brand-600 px-4 py-2 text-sm font-semibold text-brand-700 dark:text-brand-300">
                 Pengguna
@@ -29,7 +41,7 @@
         <section class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap items-center gap-2">
                 @can('create', App\Models\User::class)
-                    <button type="button" class="btn btn-primary" @click="openCreate()">
+                    <button type="button" class="btn btn-primary" @click="$dispatch('user-create')">
                         <x-heroicon-o-plus class="h-4 w-4" />
                         Tambah Pengguna
                     </button>
@@ -38,92 +50,108 @@
         </section>
 
         <section class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <form method="GET" action="{{ route('users.index') }}" class="grid gap-3 px-5 py-4 sm:grid-cols-2 lg:grid-cols-5">
+            <form method="GET" action="{{ route('users.index') }}" @submit.prevent="applyFilter()" class="grid gap-3 px-5 py-4 sm:grid-cols-2 lg:grid-cols-5">
                 <div class="lg:col-span-2">
-                    <input type="search" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Cari nama atau email…" class="form-input">
+                    <input type="search" name="search" x-model="filters.search" @input.debounce.300ms="applyFilter()" placeholder="Cari nama atau email…" class="form-input">
                 </div>
 
-                <select name="role" class="form-select">
+                <select name="role" x-model="filters.role" @change="applyFilter()" class="form-select">
                     <option value="">Semua role</option>
                     @foreach ($roles as $role)
-                        <option value="{{ $role->name }}" @selected(($filters['role'] ?? '') === $role->name)>{{ str($role->name)->replace('_', ' ')->title() }}</option>
+                        <option value="{{ $role->name }}">{{ str($role->name)->replace('_', ' ')->title() }}</option>
                     @endforeach
                 </select>
 
-                <select name="faskes" class="form-select">
+                <select name="faskes" x-model="filters.faskes" @change="applyFilter()" class="form-select">
                     <option value="">Semua faskes + dinas</option>
                     @foreach ($faskesList as $f)
-                        <option value="{{ $f->id }}" @selected((string) ($filters['faskes'] ?? '') === (string) $f->id)>{{ $f->nama }}</option>
+                        <option value="{{ $f->id }}">{{ $f->nama }}</option>
                     @endforeach
                 </select>
 
                 <div class="flex gap-2 sm:col-span-2 lg:col-span-1">
                     <button type="submit" class="btn btn-dark">Terapkan</button>
-                    <a href="{{ route('users.index') }}" class="btn btn-ghost">Atur ulang</a>
+                    <button type="button" class="btn btn-ghost" @click="reset()">Atur ulang</button>
                 </div>
             </form>
+            <noscript>
+                <p class="px-5 pb-4 text-xs text-slate-500">Aktifkan JavaScript untuk filter & pagination tanpa reload.</p>
+            </noscript>
 
-            @if ($users->isEmpty())
-                <x-ui.empty-state title="Belum ada pengguna" hint="Tambahkan akun pengguna." icon="users" />
-            @else
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
-                        <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
-                            <tr>
-                                <th class="px-5 py-3 font-medium">Nama</th>
-                                <th class="px-5 py-3 font-medium">Faskes</th>
-                                <th class="px-5 py-3 font-medium">Role</th>
-                                <th class="px-5 py-3 font-medium">Aktif terakhir</th>
-                                <th class="px-5 py-3 text-right font-medium">Aksi</th>
+            <div x-show="error" x-cloak class="mx-5 mb-4 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+                <span x-text="error"></span>
+                <button type="button" class="font-medium underline" @click="load(meta.page)">Coba lagi</button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800" :class="{ 'opacity-50': loading }">
+                    <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
+                        <tr>
+                            <th class="px-5 py-3 font-medium">
+                                <button type="button" @click="setSort('name')" class="uppercase tracking-wide hover:underline">
+                                    Nama <span x-show="sort === 'name'" x-text="sortDir === 'asc' ? '↑' : '↓'"></span>
+                                </button>
+                            </th>
+                            <th class="px-5 py-3 font-medium">Faskes</th>
+                            <th class="px-5 py-3 font-medium">Role</th>
+                            <th class="px-5 py-3 font-medium">Aktif terakhir</th>
+                            <th class="px-5 py-3 text-right font-medium">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <template x-for="row in rows" :key="row.id">
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                                <td class="px-5 py-3">
+                                    <p class="font-medium text-slate-800 dark:text-slate-100" x-text="row.name"></p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400" x-text="row.email"></p>
+                                </td>
+                                <td class="px-5 py-3 text-slate-600 dark:text-slate-300" x-text="row.fasilitas_kesehatan ? row.fasilitas_kesehatan.nama : 'Dinas'"></td>
+                                <td class="px-5 py-3">
+                                    <div class="flex flex-wrap gap-1">
+                                        <template x-for="r in row.roles" :key="r.id">
+                                            <span class="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-300" x-text="r.name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())"></span>
+                                        </template>
+                                    </div>
+                                </td>
+                                <td class="whitespace-nowrap px-5 py-3 text-xs text-slate-500 dark:text-slate-400" x-text="row.last_active_at ? new Date(row.last_active_at).toLocaleString('id-ID') : '—'"></td>
+                                <td class="whitespace-nowrap px-5 py-3 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        @if (auth()->user()->hasPermissionTo('update_users'))
+                                            <button type="button" class="btn-icon" title="Ubah"
+                                                @click="$dispatch('user-edit', { id: row.id, name: row.name, email: row.email, fasilitas_kesehatan_id: row.fasilitas_kesehatan_id, roles: row.roles.map(r => r.name) })">
+                                                <x-heroicon-o-pencil-square class="h-4 w-4" />
+                                            </button>
+                                            <button type="button" class="btn-icon" title="Reset password"
+                                                @click="$dispatch('user-reset', { id: row.id, email: row.email })">
+                                                <x-heroicon-o-key class="h-4 w-4" />
+                                            </button>
+                                        @endif
+                                        @if (auth()->user()->hasPermissionTo('delete_users'))
+                                            <button type="button" class="btn-icon btn-icon-danger" title="Hapus"
+                                                @click="$dispatch('user-confirm', { title: 'Hapus pengguna', message: 'Akun akan dihapus permanen. Ditolak bila punya riwayat transaksi.', action: '/users/' + row.id, method: 'DELETE', label: 'Hapus' })">
+                                                <x-heroicon-o-trash class="h-4 w-4" />
+                                            </button>
+                                        @endif
+                                    </div>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                            @foreach ($users as $row)
-                                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                                    <td class="px-5 py-3">
-                                        <p class="font-medium text-slate-800 dark:text-slate-100">{{ $row->name }}</p>
-                                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ $row->email }}</p>
-                                    </td>
-                                    <td class="px-5 py-3 text-slate-600 dark:text-slate-300">{{ $row->fasilitasKesehatan?->nama ?? 'Dinas' }}</td>
-                                    <td class="px-5 py-3">
-                                        <div class="flex flex-wrap gap-1">
-                                            @foreach ($row->roles as $r)
-                                                <x-ui.badge tone="brand">{{ str($r->name)->replace('_', ' ')->title() }}</x-ui.badge>
-                                            @endforeach
-                                        </div>
-                                    </td>
-                                    <td class="whitespace-nowrap px-5 py-3 text-xs text-slate-500 dark:text-slate-400">
-                                        {{ $row->last_active_at?->diffForHumans() ?? '—' }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-5 py-3 text-right">
-                                        <div class="flex items-center justify-end gap-1">
-                                            @can('update', $row)
-                                                <button type="button" class="btn-icon" title="Ubah"
-                                                    @click="openEdit(@js(array_merge($row->only(['id', 'name', 'email', 'fasilitas_kesehatan_id']), ['roles' => $row->roles->pluck('name')->toArray()])))">
-                                                    <x-heroicon-o-pencil-square class="h-4 w-4" />
-                                                </button>
-                                                <button type="button" class="btn-icon" title="Reset password"
-                                                    @click="resetOpen = true; resetId = {{ $row->id }}; resetEmail = @js($row->email)">
-                                                    <x-heroicon-o-key class="h-4 w-4" />
-                                                </button>
-                                            @endcan
-                                            @can('delete', $row)
-                                                <button type="button" class="btn-icon btn-icon-danger" title="Hapus"
-                                                    @click="openConfirm({ title: 'Hapus pengguna', message: @js('Akun akan dihapus permanen. Ditolak bila punya riwayat transaksi.'), action: '/users/' + {{ $row->id }}, method: 'DELETE', label: 'Hapus' })">
-                                                    <x-heroicon-o-trash class="h-4 w-4" />
-                                                </button>
-                                            @endcan
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        </template>
+                        <tr x-show="!loading && rows.length === 0">
+                            <td colspan="5" class="px-5 py-12 text-center">
+                                <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Tidak ada data yang cocok</p>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Ubah kata kunci atau atur ulang filter.</p>
+                            </td>
+                        </tr>
+                        <tr x-show="loading">
+                            <td colspan="5" class="px-5 py-12 text-center text-sm text-slate-500">Memuat…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                <x-ui.pagination :paginator="$users" />
-            @endif
+            <x-ui.table-pagination />
         </section>
+        </div>
 
         <x-ui.modal name="form" title="Data Pengguna" :wide="true">
             <form :action="editing ? '/users/' + editing : '{{ route('users.store') }}'" method="POST" class="grid gap-4 sm:grid-cols-2">

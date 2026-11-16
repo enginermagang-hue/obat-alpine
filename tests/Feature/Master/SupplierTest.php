@@ -35,7 +35,19 @@ class SupplierTest extends TestCase
         $this->actingAs($this->userWithRole('admin_gudang'))
             ->get('/supplier')
             ->assertOk()
-            ->assertSee('PT Uji Coba');
+            ->assertSee('Supplier', false);
+    }
+
+    public function test_tabel_json_filter_search(): void
+    {
+        Supplier::factory()->create(['nama' => 'PT Alfa Json']);
+        Supplier::factory()->create(['nama' => 'PT Beta Json']);
+
+        $response = $this->actingAs($this->userWithRole('admin_gudang'))->getJson('/supplier?search=Alfa');
+
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('PT Alfa Json', $response->json('data.0.nama'));
     }
 
     public function test_store_menolak_nama_duplikat_dan_email_salah(): void

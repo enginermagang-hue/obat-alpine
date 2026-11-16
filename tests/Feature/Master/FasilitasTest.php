@@ -34,12 +34,25 @@ class FasilitasTest extends TestCase
         $this->actingAs($this->userWithRole('super_admin'))
             ->get('/fasilitas')
             ->assertOk()
-            ->assertSee('Puskesmas Test');
+            ->assertSee('Fasilitas Kesehatan', false);
 
         $this->actingAs($this->userWithRole('admin_dinas'))
             ->get('/fasilitas')
             ->assertOk()
             ->assertDontSee('Tambah Faskes', false);
+    }
+
+    public function test_tabel_json_filter_tipe(): void
+    {
+        $induk = FasilitasKesehatan::factory()->create(['nama' => 'Puskesmas Induk Json', 'tipe' => 'puskesmas']);
+        FasilitasKesehatan::factory()->create(['nama' => 'Puskesmas Alfa Json', 'tipe' => 'puskesmas']);
+        FasilitasKesehatan::factory()->pustu($induk->id)->create(['nama' => 'Pustu Beta Json']);
+
+        $response = $this->actingAs($this->userWithRole('super_admin'))->getJson('/fasilitas?tipe=pustu');
+
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('Pustu Beta Json', $response->json('data.0.nama'));
     }
 
     public function test_index_ditolak_untuk_puskesmas(): void
