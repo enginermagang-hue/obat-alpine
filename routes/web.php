@@ -22,6 +22,7 @@ use App\Http\Controllers\Transaksi\DistribusiController;
 use App\Http\Controllers\Transaksi\PemakaianController;
 use App\Http\Controllers\Transaksi\PenerimaanController;
 use App\Http\Controllers\Transaksi\PermintaanController;
+use App\Http\Controllers\Transaksi\ReturController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -99,6 +100,14 @@ Route::middleware('auth')->group(function (): void {
     Route::resource('distribusi', DistribusiController::class);
 
     Route::resource('pemakaian', PemakaianController::class);
+
+    Route::patch('retur/{retur}/submit', [ReturController::class, 'submit'])->name('retur.submit');
+    Route::patch('retur/{retur}/approve', [ReturController::class, 'approve'])->name('retur.approve');
+    Route::patch('retur/{retur}/reject', [ReturController::class, 'reject'])->name('retur.reject');
+    Route::patch('retur/{retur}/send', [ReturController::class, 'send'])->name('retur.send');
+    Route::patch('retur/{retur}/receive', [ReturController::class, 'receive'])->name('retur.receive');
+    Route::patch('retur/{retur}/complete', [ReturController::class, 'complete'])->name('retur.complete');
+    Route::resource('retur', ReturController::class);
 
     Route::prefix('api')->middleware('throttle:60,1')->group(function (): void {
         Route::get('obat/search', [LookupController::class, 'obat'])->name('api.obat.search');

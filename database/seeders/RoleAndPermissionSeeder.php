@@ -156,7 +156,7 @@ class RoleAndPermissionSeeder extends Seeder
         // ──────────── pustu ────────────
         $pustu->givePermissionTo([
             'view_dashboard', 'input_laporan',
-            'view_retur_obat',
+            'view_retur_obat', 'create_retur_obat', 'update_retur_obat', 'delete_retur_obat',
             'view_permintaan_obat', 'create_permintaan_obat', 'update_permintaan_obat',
             'view_distribusi_obat', 'update_distribusi_obat',
             'view_stok_faskes', 'view_batch_stok',
