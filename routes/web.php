@@ -12,6 +12,7 @@ use App\Http\Controllers\Master\SumberDanaController;
 use App\Http\Controllers\Master\SupplierController;
 use App\Http\Controllers\Master\UserController;
 use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\Stok\StokGudangController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -57,4 +58,8 @@ Route::middleware('auth')->group(function (): void {
     Route::resource('users', UserController::class)->except('show');
 
     Route::resource('roles', RoleController::class)->except('show');
+
+    Route::post('stok-gudang/recalculate', [StokGudangController::class, 'recalculate'])->name('stok-gudang.recalculate');
+    Route::get('stok-gudang/{obat}', [StokGudangController::class, 'show'])->name('stok-gudang.show');
+    Route::resource('stok-gudang', StokGudangController::class)->only('index');
 });
