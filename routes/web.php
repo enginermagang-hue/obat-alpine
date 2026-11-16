@@ -12,6 +12,7 @@ use App\Http\Controllers\Master\SumberDanaController;
 use App\Http\Controllers\Master\SupplierController;
 use App\Http\Controllers\Master\UserController;
 use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\Stok\StokFaskesController;
 use App\Http\Controllers\Stok\StokGudangController;
 use Illuminate\Support\Facades\Route;
 
@@ -62,4 +63,8 @@ Route::middleware('auth')->group(function (): void {
     Route::post('stok-gudang/recalculate', [StokGudangController::class, 'recalculate'])->name('stok-gudang.recalculate');
     Route::get('stok-gudang/{obat}', [StokGudangController::class, 'show'])->name('stok-gudang.show');
     Route::resource('stok-gudang', StokGudangController::class)->only('index');
+
+    Route::post('stok-faskes/recalculate', [StokFaskesController::class, 'recalculate'])->name('stok-faskes.recalculate');
+    Route::get('stok-faskes/{fasilitas}/{obat}', [StokFaskesController::class, 'show'])->name('stok-faskes.show');
+    Route::resource('stok-faskes', StokFaskesController::class)->only('index');
 });
