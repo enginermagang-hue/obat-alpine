@@ -98,6 +98,44 @@ class PenerimaanStokPolicy
         return $penerimaanStok->fasilitas_id === $userFaskesId;
     }
 
+    /**
+     * Konfirmasi: sama dengan update, tetapi untuk record draft.
+     */
+    public function confirm(User $user, PenerimaanStok $penerimaanStok): bool
+    {
+        return $this->canModify($user, $penerimaanStok, 'draft');
+    }
+
+    /**
+     * Batalkan: sama dengan update, tetapi untuk record yang sudah dikonfirmasi.
+     */
+    public function cancel(User $user, PenerimaanStok $penerimaanStok): bool
+    {
+        return $this->canModify($user, $penerimaanStok, 'dikonfirmasi');
+    }
+
+    private function canModify(User $user, PenerimaanStok $penerimaanStok, string $status): bool
+    {
+        if (! $user->hasPermissionTo('update_penerimaan_stok')) {
+            return false;
+        }
+
+        if ($penerimaanStok->status !== $status) {
+            return false;
+        }
+
+        if ($this->isGlobalAdmin($user)) {
+            return true;
+        }
+
+        $userFaskesId = $user->fasilitas_kesehatan_id;
+        if (blank($userFaskesId)) {
+            return false;
+        }
+
+        return $penerimaanStok->fasilitas_id === $userFaskesId;
+    }
+
     private function isGlobalAdmin(User $user): bool
     {
         return $user->hasRole('super_admin')

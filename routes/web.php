@@ -18,6 +18,7 @@ use App\Http\Controllers\Stok\OpnameController;
 use App\Http\Controllers\Stok\RiwayatStokController;
 use App\Http\Controllers\Stok\StokFaskesController;
 use App\Http\Controllers\Stok\StokGudangController;
+use App\Http\Controllers\Transaksi\PenerimaanController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -78,6 +79,10 @@ Route::middleware('auth')->group(function (): void {
 
     Route::patch('opname/{opname}/reopen', [OpnameController::class, 'reopen'])->name('opname.reopen');
     Route::resource('opname', OpnameController::class);
+
+    Route::patch('penerimaan/{penerimaan}/confirm', [PenerimaanController::class, 'confirm'])->name('penerimaan.confirm');
+    Route::patch('penerimaan/{penerimaan}/cancel', [PenerimaanController::class, 'cancel'])->name('penerimaan.cancel');
+    Route::resource('penerimaan', PenerimaanController::class);
 
     Route::prefix('api')->middleware('throttle:60,1')->group(function (): void {
         Route::get('obat/search', [LookupController::class, 'obat'])->name('api.obat.search');
