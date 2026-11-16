@@ -9,6 +9,7 @@ use App\Models\FasilitasKesehatan;
 use App\Models\ReturObat;
 use App\Models\RiwayatStok;
 use App\Models\Supplier;
+use App\Models\User;
 use App\Services\NotificationService;
 use App\Services\StokService;
 use App\Support\FaskesAccess;
@@ -86,6 +87,7 @@ class ReturController extends Controller
             'lockedPengirim' => filled($user->fasilitas_kesehatan_id),
             'defaultPengirim' => $user->fasilitas_kesehatan_id,
             'defaultTipe' => $this->defaultTipe($user->fasilitas_kesehatan_id),
+            'defaultPenerima' => null,
             'faskesList' => FaskesAccess::scopeQuery(FasilitasKesehatan::query()->orderBy('nama'), $user)->get(['id', 'nama', 'tipe']),
             'supplierList' => Supplier::query()->where('status', 'aktif')->orderBy('nama')->get(['id', 'nama']),
             'oldRows' => [],
@@ -158,7 +160,8 @@ class ReturController extends Controller
             'retur' => $retur,
             'lockedPengirim' => filled($user->fasilitas_kesehatan_id),
             'defaultPengirim' => $retur->fasilitas_pengirim_id,
-            'defaultTipe' => $retur->tipe_retur,
+            'defaultTipe' => old('tipe_retur', $retur->tipe_retur),
+            'defaultPenerima' => old('fasilitas_penerima_id', $retur->fasilitas_penerima_id),
             'faskesList' => FaskesAccess::scopeQuery(FasilitasKesehatan::query()->orderBy('nama'), $user)->get(['id', 'nama', 'tipe']),
             'supplierList' => Supplier::query()->orderBy('nama')->get(['id', 'nama']),
             'oldRows' => $retur->details->map(fn ($d) => [
@@ -330,7 +333,7 @@ class ReturController extends Controller
     /**
      * Batasi daftar sesuai aturan ReturObatPolicy::view.
      */
-    private function scopeList($query, \App\Models\User $user): void
+    private function scopeList($query, User $user): void
     {
         if ($user->hasRole('super_admin') || $user->hasRole('admin_dinas')) {
             return;

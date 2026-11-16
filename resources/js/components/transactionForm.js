@@ -139,6 +139,9 @@ export default ({
             if (row.jumlah_diminta !== undefined && (row.jumlah === undefined || row.jumlah === 0)) {
                 row.jumlah = row.jumlah_diminta;
             }
+            if (row.jumlah_retur !== undefined && (row.jumlah === undefined || row.jumlah === 0)) {
+                row.jumlah = row.jumlah_retur;
+            }
             if (row.catatan !== undefined && (row.keterangan === undefined || row.keterangan === '')) {
                 row.keterangan = row.catatan;
             }
@@ -171,6 +174,9 @@ function emptyRow() {
         tanggal_expired: '',
         jumlah: 0,
         harga_satuan: '',
+        dosis: '',
+        satuan_dosis: '',
         keterangan: '',
+        catatan: '',
     };
 }

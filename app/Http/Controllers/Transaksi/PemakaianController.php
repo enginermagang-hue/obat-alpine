@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Transaksi;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PemakaianRequest;
+use App\Models\DetailPemakaianObat;
 use App\Models\FasilitasKesehatan;
 use App\Models\Obat;
 use App\Models\PemakaianObat;
@@ -131,7 +132,7 @@ class PemakaianController extends Controller
 
         $riwayat = RiwayatStok::query()
             ->with('obat:id,nama_obat')
-            ->where('referensi_type', \App\Models\DetailPemakaianObat::class)
+            ->where('referensi_type', DetailPemakaianObat::class)
             ->whereIn('referensi_id', $pemakaian->details->pluck('id'))
             ->latest('id')
             ->limit(30)

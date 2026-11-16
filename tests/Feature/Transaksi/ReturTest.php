@@ -35,7 +35,7 @@ class ReturTest extends TestCase
         return $user;
     }
 
-    private function stokBatch(Obat $obat, ?int $faskesId, int $jumlah = 100): \App\Models\BatchStok
+    private function stokBatch(Obat $obat, ?int $faskesId, int $jumlah = 100): BatchStok
     {
         $batch = BatchStok::factory()->create([
             'obat_id' => $obat->id,
@@ -53,7 +53,7 @@ class ReturTest extends TestCase
         return $batch;
     }
 
-    private function rows(Obat $obat, \App\Models\BatchStok $batch, int $jumlah = 20): array
+    private function rows(Obat $obat, BatchStok $batch, int $jumlah = 20): array
     {
         return [[
             'obat_id' => $obat->id,

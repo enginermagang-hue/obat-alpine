@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\BatchStok;
+use App\Models\FasilitasKesehatan;
 use App\Models\Obat;
 use App\Models\ReturObat;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,7 +21,7 @@ class ReturObatFactory extends Factory
     public function definition(): array
     {
         return [
-            'fasilitas_pengirim_id' => \App\Models\FasilitasKesehatan::factory(),
+            'fasilitas_pengirim_id' => FasilitasKesehatan::factory(),
             'fasilitas_penerima_id' => null,
             'tipe_retur' => 'puskesmas_ke_gudang',
             'alasan' => 'expired',

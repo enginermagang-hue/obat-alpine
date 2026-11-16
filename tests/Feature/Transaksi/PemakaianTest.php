@@ -3,6 +3,8 @@
 namespace Tests\Feature\Transaksi;
 
 use App\Models\BatchStok;
+use App\Models\DetailPemakaianObat;
+use App\Models\FasilitasKesehatan;
 use App\Models\Obat;
 use App\Models\PemakaianObat;
 use App\Models\StokFaskes;
@@ -66,7 +68,7 @@ class PemakaianTest extends TestCase
 
     public function test_store_mengalokasikan_batch_dan_menurunkan_stok(): void
     {
-        $faskes = \App\Models\FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
+        $faskes = FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
         $user = $this->userWithRole('puskesmas', ['fasilitas_kesehatan_id' => $faskes->id]);
         $obat = Obat::factory()->create(['metode_stok' => 'fefo']);
         $this->stokObat($obat, $faskes->id, 100);
@@ -83,14 +85,14 @@ class PemakaianTest extends TestCase
         $this->assertNotNull($pemakaian->details()->first()->batch_id);
         $this->assertSame(70, StokFaskes::where('fasilitas_id', $faskes->id)->where('obat_id', $obat->id)->first()->jumlah);
         $this->assertDatabaseHas('riwayat_stok', [
-            'referensi_type' => \App\Models\DetailPemakaianObat::class,
+            'referensi_type' => DetailPemakaianObat::class,
             'tipe' => 'keluar',
         ]);
     }
 
     public function test_store_ditolak_bila_stok_kurang_dan_tidak_ada_sisa(): void
     {
-        $faskes = \App\Models\FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
+        $faskes = FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
         $user = $this->userWithRole('puskesmas', ['fasilitas_kesehatan_id' => $faskes->id]);
         $obat = Obat::factory()->create();
         $this->stokObat($obat, $faskes->id, 10);
@@ -106,7 +108,7 @@ class PemakaianTest extends TestCase
 
     public function test_update_membalik_lalu_menerapkan_ulang(): void
     {
-        $faskes = \App\Models\FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
+        $faskes = FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
         $user = $this->userWithRole('puskesmas', ['fasilitas_kesehatan_id' => $faskes->id]);
         $obat = Obat::factory()->create();
         $this->stokObat($obat, $faskes->id, 100);
@@ -132,7 +134,7 @@ class PemakaianTest extends TestCase
 
     public function test_edit_ditolak_bila_bukan_hari_ini(): void
     {
-        $faskes = \App\Models\FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
+        $faskes = FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
         $user = $this->userWithRole('puskesmas', ['fasilitas_kesehatan_id' => $faskes->id]);
         $obat = Obat::factory()->create();
         $this->stokObat($obat, $faskes->id, 100);

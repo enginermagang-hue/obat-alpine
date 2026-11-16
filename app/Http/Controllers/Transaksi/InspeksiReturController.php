@@ -8,12 +8,12 @@ use App\Models\BatchStok;
 use App\Models\DetailReturObat;
 use App\Models\InspeksiRetur;
 use App\Models\ReturObat;
-use App\Support\FaskesAccess;
 use App\Support\TableMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class InspeksiReturController extends Controller
@@ -144,7 +144,7 @@ class InspeksiReturController extends Controller
     /**
      * Retur yang bisa diinspeksi: sudah diterima/selesai dan masih punya item belum diinspeksi.
      *
-     * @return \Illuminate\Support\Collection<int, ReturObat>
+     * @return Collection<int, ReturObat>
      */
     private function returTerbuka()
     {
