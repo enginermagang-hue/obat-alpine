@@ -44,7 +44,7 @@ Referensi skema: `D:\project\obat\docs\Struktur Database.md` — ini **sumber tu
 | Services / Policies | — | ✅ 24 service + 24 policy dicopy, Filament dibersihkan |
 | Console & Cetak | — | ✅ 21 command + scheduler, 10 controller cetak, 11 view PDF |
 | Data dummy | — | ✅ 12 bulan: 18.926 pemakaian, 72 distribusi, 35 penerimaan |
-| Test | — | ✅ 49 test, 172 assertion (auth, dashboard, profil, master) |
+| Test | — | ✅ 74 test, 249 assertion (auth, dashboard, profil, master, stok) |
 | Repo git | `main` | ✅ 4 commit, working tree bersih |
 | Filament | — | ✅ tidak terpasang |
 
@@ -468,16 +468,16 @@ Pola halaman: `Controller@index` (paginate + filter query string) → `index.bla
 
 ---
 
-## 7. Fase 3 — Stok & batch
+## 7. Fase 3 — Stok & batch ✅ 16 Nov 2026
 
 | Modul | Isi |
 | --- | --- |
-| Stok Gudang | agregat per obat, stok minimum, drill-down batch |
-| Stok Faskes | per faskes + obat, drill-down batch + filter expired |
-| Batch | daftar batch per faskes/gudang, status, expiry, nilai |
-| Riwayat Stok | log mutasi dengan filter tipe/tanggal/obat |
-| Opname | header + detail (stok sistem vs fisik), status draft→proses→selesai |
-| Stok minimum | jalankan `KalkulasiStokMinimumCommand`, tampilkan ringkasan |
+| Stok Gudang ✅ | agregat per obat, stok minimum, drill-down batch |
+| Stok Faskes ✅ | per faskes + obat, drill-down batch + filter expired |
+| Batch ✅ | daftar batch per faskes/gudang, status, expiry, nilai |
+| Riwayat Stok ✅ | log mutasi dengan filter tipe/tanggal/obat |
+| Opname ✅ | header + detail (stok sistem vs fisik), status draft→proses→selesai |
+| Stok minimum ✅ | tombol hitung ulang di kedua halaman stok (service yang sama dengan CLI) |
 
 Semua penulisan stok **wajib** lewat `StokService` (batch = sumber kebenaran).
 
@@ -593,10 +593,10 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
 - [ ] Roles
 - [ ] Permissions
 - [ ] ActivityLogs
-- [ ] StokGudangs
-- [ ] StokFaskes
-- [ ] RiwayatStoks
-- [ ] OpnameStoks
+- [x] StokGudangs
+- [x] StokFaskes
+- [x] RiwayatStoks
+- [x] OpnameStoks
 - [ ] PenerimaanStoks
 - [ ] DistribusiObats
 - [ ] PermintaanObats
@@ -640,5 +640,6 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
 3. **Fase 0c** ✅: spatie permission/activitylog terpasang & terbit, seeder master + akun jalan, `schema-diff` 0 selisih (sqlite & mysql).
 4. **Fase 1a** ✅: layout + auth + dashboard + profil, menu role-aware, dark mode, 12 test hijau.
 5. **Fase 1b** ✅: 24 service + 24 policy + 21 command + 10 controller cetak dicopy, Filament dibersihkan, data dummy 12 bulan + 318 model AI terlatih.
-6. **Fase 2** ✅: 5 modul master selesai (obat, fasilitas, sumber dana, supplier, users & roles) —
-   49 test hijau. Lanjut Fase 3 (Stok & batch).
+6. **Fase 2** ✅: 5 modul master selesai (obat, fasilitas, sumber dana, supplier, users & roles).
+7. **Fase 3** ✅: stok gudang/faskes + batch + riwayat + opname (25 test baru, total 74 hijau).
+   Lanjut Fase 4 (Transaksi inti).

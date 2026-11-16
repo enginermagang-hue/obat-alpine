@@ -33,7 +33,8 @@ Rencana kerja lengkap & status per fase: [`plan.md`](plan.md).
 | 0c | spatie permission/activitylog, seeder master + akun | ✅ |
 | 1a | layout (sidebar/topbar, dark mode), auth, dashboard, profil | ✅ |
 | 1b | 24 service, 24 policy, 21 command, 10 controller cetak, data dummy + model AI | ✅ |
-| 2 | Master data (5 modul selesai: Obat, Fasilitas, Sumber Dana, Supplier, User & Role) | ✅ |
+| 2 | Master data (5 modul: Obat, Faskes, Sumber Dana, Supplier, User & Role) | ✅ |
+| 3 | Stok & batch (Stok Gudang/Faskes, Batch, Riwayat, Opname) | ✅ |
 | 3–8 | Stok, transaksi, laporan, prediksi, backlog | ⏳ |
 
 Data dummy saat ini: 12 bulan (Des 2025 – Nov 2026), 18.926 pemakaian, 4.419 batch,
@@ -93,7 +94,7 @@ Buka `http://127.0.0.1:8000`.
 ## Perintah harian
 
 ```powershell
-php artisan test                  # 49 test (SQLite :memory:)
+php artisan test                  # 74 test (SQLite :memory:)
 vendor\bin\pint                  # format kode
 php artisan migrate:fresh --seed  # reset DB dev (aman, tanpa data produksi)
 
@@ -124,23 +125,28 @@ app/
     Master/SupplierController.php     # CRUD + guard penerimaan
     Master/UserController.php         # CRUD + reset password + syncRoles
     Master/RoleController.php         # CRUD role + matriks permission
+    Stok/StokGudangController.php     # KPI, filter, drill-down batch, hitung minimum
+    Stok/StokFaskesController.php     # scope faskes, filter expiry
+    Stok/BatchController.php          # filter faskes/status/expiry, KPI nilai
+    Stok/RiwayatStokController.php    # filter tipe/tanggal/obat/faskes
+    Stok/OpnameController.php         # form multi-baris, 3 tahap status, reopen
+    Api/LookupController.php          # /api/obat/search, /api/batch, /api/stok-sistem
     Master/ImportObatController.php # upload CSV + template (job async)
     CetakObatExcelController.php    # export Excel master obat (filter dari index)
     Cetak*.php                      # 10 controller PDF/Excel (reuse project lama)
   Http/Middleware/SetLocaleFromPreferences.php
-  Http/Requests/                    # LoginRequest, ProfilUpdateRequest, ObatRequest, FasilitasKesehatanRequest,
-                                  # SumberDanaRequest, SupplierRequest, UserRequest
   Jobs/ImportObatJob.php          # import CSV obat (upsert by kode_obat)
+  Policies/                         # 25 policy (BatchStokPolicy baru Fase 3)
+  Support/FaskesAccess.php          # visibleFasilitasIds + scopeQuery (dipakai semua list stok)
+  Services/StokService.php          # fix: reverseOpname pulihkan batch utk selisih negatif
   Models/                           # 37 model + Traits/LogsActivity
-  Policies/                         # 24 policy (auto-discovery)
-  Services/                         # 24 service (StokService, FefoService, ANN, dll.)
-  Support/FaskesAccess.php          # batas akses faskes/pustu
   Notifications/AppNotification.php # notifikasi database (pengganti Filament)
   Console/Commands/                 # 21 command (AI, tutup buku, cleanup, docs)
-config/navigation.php               # menu sidebar/topbar (auto-hide bila route belum ada)
-database/factories/                 # User, Obat, FasilitasKesehatan, SumberDana, Supplier
+config/navigation.php               # menu sidebar/topbar (filter route + role + permission)
+database/factories/                 # User, Obat, Faskes, SumberDana, Supplier, BatchStok, RiwayatStok
 database/schema-diff.php            # verifier paritas skema (SQlite & MySQL)
 resources/js/components/modal.js    # Alpine.data('modal') reuse semua modul
+resources/js/components/docForm.js  # Alpine.data('opnameForm') form multi-baris
 resources/views/
   layouts/app.blade.php             # shell aplikasi
   components/ui/                    # modal, badge, empty-state, pagination
@@ -154,7 +160,7 @@ resources/views/
   dashboard.blade.php
   profil/edit.blade.php
   pdf/                              # 11 template cetak
-routes/web.php                      # 17 route (auth + profil + obat + import/export)
+routes/web.php                      # auth + profil + master + stok + api lookup
 routes/console.php                  # scheduler
 ```
 
@@ -188,12 +194,15 @@ routes/console.php                  # scheduler
 
 ## Lanjutan (TODO berikutnya)
 
-1. **Fase 2 — Master data (Obat ✅)**: modul **Obat** (`/obat`) selesai sebagai pola:
-   `Master/ObatController` + `ObatRequest` + filter query string + modal Alpine (`modal.js`)
-   + komponen `x-ui/*` + import CSV (`ImportObatJob`, upsert by `kode_obat`) + export Excel.
-   Butuh `php artisan queue:work` agar import async jalan di dev.
-2. **Fase 3 — Stok & batch** berikutnya: Stok Gudang/Faskes, Batch, Riwayat, Opname
-   (semua read-only + aksi via service, pola filter + drill-down).
+1. **Fase 2 — Master data (5 modul ✅)**: Obat, Fasilitas, Sumber Dana, Supplier, User & Role —
+   pola `Controller + Request + modal Alpine + x-ui/*` dipakai ulang Fase 3.
+   Butuh `php artisan queue:work` agar import CSV obat async jalan di dev.
+2. **Fase 3 — Stok & batch (✅)**: Stok Gudang/Faskes (KPI, status Habis/Menipis/Tersedia,
+   drill-down batch, hitung stok minimum), Batch (KPI nilai & kadaluarsa),
+   Riwayat Stok (filter tipe/tanggal), Opname (form multi-baris, 3 tahap status,
+   kunci + buka kembali, endpoint lookup obat/batch).
+   Perbaikan: `reverseOpname` kini memulihkan batch untuk selisih negatif;
+   puskesmas/pustu diberi `view_batch_stok`; nav sadar-permission.
 3. Route cetak (10 controller) belum dipasang — dipasang bersama modul transaksi/laporan (Fase 4–6).
 4. `PanduanController` + view panduan belum dibawa (butuh konten Markdown dari project lama).
 5. Notifikasi database (`AppNotification`) sudah tersimpan, tapi belum ada halaman inbox/bell.
