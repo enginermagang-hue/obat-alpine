@@ -19,6 +19,7 @@ use App\Http\Controllers\Stok\RiwayatStokController;
 use App\Http\Controllers\Stok\StokFaskesController;
 use App\Http\Controllers\Stok\StokGudangController;
 use App\Http\Controllers\Transaksi\DistribusiController;
+use App\Http\Controllers\Transaksi\InspeksiReturController;
 use App\Http\Controllers\Transaksi\PemakaianController;
 use App\Http\Controllers\Transaksi\PenerimaanController;
 use App\Http\Controllers\Transaksi\PermintaanController;
@@ -100,6 +101,8 @@ Route::middleware('auth')->group(function (): void {
     Route::resource('distribusi', DistribusiController::class);
 
     Route::resource('pemakaian', PemakaianController::class);
+
+    Route::resource('inspeksi-retur', InspeksiReturController::class)->parameters(['inspeksi-retur' => 'inspeksi_retur']);
 
     Route::patch('retur/{retur}/submit', [ReturController::class, 'submit'])->name('retur.submit');
     Route::patch('retur/{retur}/approve', [ReturController::class, 'approve'])->name('retur.approve');
