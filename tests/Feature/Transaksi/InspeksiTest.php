@@ -3,7 +3,6 @@
 namespace Tests\Feature\Transaksi;
 
 use App\Models\BatchStok;
-use App\Models\DetailReturObat;
 use App\Models\FasilitasKesehatan;
 use App\Models\InspeksiRetur;
 use App\Models\Obat;
