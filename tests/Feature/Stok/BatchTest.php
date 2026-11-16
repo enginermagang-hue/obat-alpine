@@ -34,10 +34,11 @@ class BatchTest extends TestCase
         BatchStok::factory()->create(['batch_number' => 'BTH-AKTIF-1', 'status' => 'tersedia']);
         BatchStok::factory()->create(['batch_number' => 'BTH-KAR-1', 'status' => 'karantina']);
 
-        $response = $this->actingAs($this->userWithRole('admin_gudang'))->get('/batch?status=karantina');
+        $response = $this->actingAs($this->userWithRole('admin_gudang'))->getJson('/batch?status=karantina');
 
-        $response->assertOk()->assertSee('BTH-KAR-1');
-        $response->assertDontSee('BTH-AKTIF-1', false);
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('BTH-KAR-1', $response->json('data.0.batch_number'));
     }
 
     public function test_pustu_hanya_melihat_batch_sendiri(): void
@@ -50,10 +51,11 @@ class BatchTest extends TestCase
 
         $user = $this->userWithRole('pustu', ['fasilitas_kesehatan_id' => $pustu->id]);
 
-        $response = $this->actingAs($user)->get('/batch');
+        $response = $this->actingAs($user)->getJson('/batch');
 
-        $response->assertOk()->assertSee('BTH-PUSTU-1');
-        $response->assertDontSee('BTH-INDUK-1', false);
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('BTH-PUSTU-1', $response->json('data.0.batch_number'));
     }
 
     public function test_user_faskes_hanya_melihat_batch_sendiri(): void
@@ -66,10 +68,11 @@ class BatchTest extends TestCase
 
         $user = $this->userWithRole('puskesmas', ['fasilitas_kesehatan_id' => $faskesA->id]);
 
-        $response = $this->actingAs($user)->get('/batch');
+        $response = $this->actingAs($user)->getJson('/batch');
 
-        $response->assertOk()->assertSee('BTH-MILIK-A');
-        $response->assertDontSee('BTH-MILIK-B', false);
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('BTH-MILIK-A', $response->json('data.0.batch_number'));
     }
 
     public function test_filter_expiry_lewat(): void
@@ -83,9 +86,10 @@ class BatchTest extends TestCase
             'tanggal_expired' => now()->addYears(2)->toDateString(),
         ]);
 
-        $response = $this->actingAs($this->userWithRole('admin_dinas'))->get('/batch?expiry=lewat');
+        $response = $this->actingAs($this->userWithRole('admin_dinas'))->getJson('/batch?expiry=lewat');
 
-        $response->assertOk()->assertSee('BTH-LEWAT-1');
-        $response->assertDontSee('BTH-AMAN-1', false);
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('BTH-LEWAT-1', $response->json('data.0.batch_number'));
     }
 }

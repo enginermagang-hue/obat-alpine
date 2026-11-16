@@ -7,7 +7,9 @@ use App\Models\FasilitasKesehatan;
 use App\Models\Obat;
 use App\Models\RiwayatStok;
 use App\Support\FaskesAccess;
+use App\Support\TableMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -15,7 +17,7 @@ class RiwayatStokController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', RiwayatStok::class);
 
@@ -51,13 +53,24 @@ class RiwayatStokController extends Controller
 
         $query->latest('tanggal')->latest('id');
 
-        $perPage = (int) ($user->preferences->items_per_halaman ?? 25);
+        $perPage = (int) $request->query('per_page', $user->preferences->items_per_halaman ?? 25);
         $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 25;
 
         $riwayat = $query->paginate($perPage)->withQueryString();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $riwayat->items(),
+                'meta' => TableMeta::from($riwayat),
+            ]);
+        }
+
         return view('stok.riwayat.index', [
-            'riwayat' => $riwayat,
+            'initial' => [
+                'data' => $riwayat->items(),
+                'meta' => TableMeta::from($riwayat),
+                'filters' => $filters,
+            ],
             'filters' => $filters,
             'lockedFaskes' => $lockedFaskes,
             'faskesList' => FaskesAccess::scopeQuery(FasilitasKesehatan::query()->orderBy('nama'), $user)->get(['id', 'nama']),

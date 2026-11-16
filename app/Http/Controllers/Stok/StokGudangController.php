@@ -8,7 +8,9 @@ use App\Models\Obat;
 use App\Models\RiwayatStok;
 use App\Models\StokGudang;
 use App\Services\KalkulasiStokMinimumService;
+use App\Support\TableMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,11 +19,14 @@ class StokGudangController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', StokGudang::class);
 
         $filters = $request->only(['search', 'kategori', 'status_stok']);
+        $sorts = ['jumlah' => 'jumlah'];
+        $sort = $sorts[$request->query('sort')] ?? null;
+        $sortDir = $request->query('sortDir') === 'desc' ? 'desc' : 'asc';
 
         $query = StokGudang::query()->with('obat:id,kode_obat,nama_obat,kategori,satuan');
 
@@ -42,18 +47,32 @@ class StokGudangController extends Controller
             default => null,
         };
 
-        $query->when($request->query('sort') === 'jumlah_desc', fn ($q) => $q->orderByDesc('jumlah'))
-            ->when($request->query('sort') === 'jumlah_asc', fn ($q) => $q->orderBy('jumlah'))
-            ->when(! in_array($request->query('sort'), ['jumlah_desc', 'jumlah_asc'], true), fn ($q) => $q
-                ->whereHas('obat', fn ($q) => $q->orderBy('nama_obat'))->orderBy('obat_id'));
-
-        $perPage = (int) ($request->user()->preferences->items_per_halaman ?? 10);
+        $perPage = (int) $request->query('per_page', $request->user()->preferences->items_per_halaman ?? 10);
         $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
+
+        if ($sort) {
+            $query->orderBy($sort, $sortDir);
+        } else {
+            $query->whereHas('obat', fn ($q) => $q->orderBy('nama_obat'))->orderBy('obat_id');
+        }
 
         $stok = $query->paginate($perPage)->withQueryString();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $stok->items(),
+                'meta' => TableMeta::from($stok),
+            ]);
+        }
+
         return view('stok.gudang.index', [
-            'stok' => $stok,
+            'initial' => [
+                'data' => $stok->items(),
+                'meta' => TableMeta::from($stok),
+                'filters' => $filters,
+                'sort' => $request->query('sort'),
+                'sortDir' => $sortDir,
+            ],
             'filters' => $filters,
             'kategoriList' => Obat::query()->distinct()->orderBy('kategori')->pluck('kategori'),
             'kpi' => $this->kpi(),

@@ -50,10 +50,11 @@ class StokGudangTest extends TestCase
         StokGudang::create(['obat_id' => Obat::factory()->create(['nama_obat' => 'Obat Habis Unik'])->id, 'jumlah' => 0, 'stok_minimum' => 10]);
         StokGudang::create(['obat_id' => Obat::factory()->create(['nama_obat' => 'Obat Ada Unik'])->id, 'jumlah' => 100, 'stok_minimum' => 10]);
 
-        $response = $this->actingAs($user)->get('/stok-gudang?status_stok=habis');
+        $response = $this->actingAs($user)->getJson('/stok-gudang?status_stok=habis');
 
-        $response->assertOk()->assertSee('Obat Habis Unik');
-        $response->assertDontSee('Obat Ada Unik', false);
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('Obat Habis Unik', $response->json('data.0.obat.nama_obat'));
     }
 
     public function test_show_menampilkan_batch(): void

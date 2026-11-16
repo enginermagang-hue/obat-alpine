@@ -11,7 +11,9 @@ use App\Models\StokFaskes;
 use App\Models\User;
 use App\Services\KalkulasiStokMinimumService;
 use App\Support\FaskesAccess;
+use App\Support\TableMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -20,7 +22,7 @@ class StokFaskesController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', StokFaskes::class);
 
@@ -28,6 +30,9 @@ class StokFaskesController extends Controller
         $lockedFaskes = filled($user->fasilitas_kesehatan_id);
 
         $filters = $request->only(['search', 'fasilitas', 'kategori', 'status_stok']);
+        $sorts = ['jumlah' => 'jumlah'];
+        $sort = $sorts[$request->query('sort')] ?? null;
+        $sortDir = $request->query('sortDir') === 'desc' ? 'desc' : 'asc';
 
         $query = StokFaskes::query()->with(['obat:id,kode_obat,nama_obat,kategori,satuan', 'fasilitas:id,nama,tipe']);
 
@@ -51,18 +56,32 @@ class StokFaskesController extends Controller
             default => null,
         };
 
-        $query->when($request->query('sort') === 'jumlah_desc', fn ($q) => $q->orderByDesc('jumlah'))
-            ->when($request->query('sort') === 'jumlah_asc', fn ($q) => $q->orderBy('jumlah'))
-            ->when(! in_array($request->query('sort'), ['jumlah_desc', 'jumlah_asc'], true), fn ($q) => $q
-                ->orderBy('fasilitas_id')->orderBy('obat_id'));
-
-        $perPage = (int) ($user->preferences->items_per_halaman ?? 10);
+        $perPage = (int) $request->query('per_page', $user->preferences->items_per_halaman ?? 10);
         $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
+
+        if ($sort) {
+            $query->orderBy($sort, $sortDir);
+        } else {
+            $query->orderBy('fasilitas_id')->orderBy('obat_id');
+        }
 
         $stok = $query->paginate($perPage)->withQueryString();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $stok->items(),
+                'meta' => TableMeta::from($stok),
+            ]);
+        }
+
         return view('stok.faskes.index', [
-            'stok' => $stok,
+            'initial' => [
+                'data' => $stok->items(),
+                'meta' => TableMeta::from($stok),
+                'filters' => $filters,
+                'sort' => $request->query('sort'),
+                'sortDir' => $sortDir,
+            ],
             'filters' => $filters,
             'lockedFaskes' => $lockedFaskes,
             'faskesList' => FaskesAccess::scopeQuery(FasilitasKesehatan::query()->orderBy('nama'), $user)->get(['id', 'nama']),

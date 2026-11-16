@@ -7,7 +7,9 @@ use App\Models\BatchStok;
 use App\Models\FasilitasKesehatan;
 use App\Models\User;
 use App\Support\FaskesAccess;
+use App\Support\TableMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -15,7 +17,7 @@ class BatchController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', BatchStok::class);
 
@@ -23,6 +25,9 @@ class BatchController extends Controller
         $lockedFaskes = filled($user->fasilitas_kesehatan_id);
 
         $filters = $request->only(['search', 'fasilitas', 'status', 'expiry']);
+        $sorts = ['expired' => 'tanggal_expired', 'jumlah' => 'jumlah'];
+        $sort = $sorts[$request->query('sort')] ?? null;
+        $sortDir = $request->query('sortDir') === 'desc' ? 'desc' : 'asc';
 
         $query = BatchStok::query()->with(['obat:id,kode_obat,nama_obat,satuan', 'fasilitas:id,nama,tipe', 'sumberDana:id,nama']);
 
@@ -54,15 +59,32 @@ class BatchController extends Controller
             default => null,
         };
 
-        $query->orderBy('tanggal_expired')->orderBy('id');
+        if ($sort) {
+            $query->orderBy($sort, $sortDir)->orderBy('id');
+        } else {
+            $query->orderBy('tanggal_expired')->orderBy('id');
+        }
 
-        $perPage = (int) ($user->preferences->items_per_halaman ?? 10);
+        $perPage = (int) $request->query('per_page', $user->preferences->items_per_halaman ?? 10);
         $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
 
         $batches = $query->paginate($perPage)->withQueryString();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $batches->items(),
+                'meta' => TableMeta::from($batches),
+            ]);
+        }
+
         return view('stok.batch.index', [
-            'batches' => $batches,
+            'initial' => [
+                'data' => $batches->items(),
+                'meta' => TableMeta::from($batches),
+                'filters' => $filters,
+                'sort' => $request->query('sort'),
+                'sortDir' => $sortDir,
+            ],
             'filters' => $filters,
             'lockedFaskes' => $lockedFaskes,
             'faskesList' => FaskesAccess::scopeQuery(FasilitasKesehatan::query()->orderBy('nama'), $user)->get(['id', 'nama']),

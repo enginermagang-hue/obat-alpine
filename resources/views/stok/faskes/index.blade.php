@@ -4,7 +4,14 @@
 @section('subtitle', 'Stok puskesmas dan pustu per obat')
 
 @section('content')
-    <div class="space-y-6">
+    <div
+        class="space-y-6"
+        x-data="dataTable({
+            url: '{{ route('stok-faskes.index') }}',
+            initial: @js($initial),
+            filterKeys: ['search', 'fasilitas', 'kategori', 'status_stok'],
+        })"
+    >
         <section class="grid gap-4 sm:grid-cols-3">
             @php
                 $tones = [
@@ -47,92 +54,100 @@
         </section>
 
         <section class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <form method="GET" action="{{ route('stok-faskes.index') }}" class="grid gap-3 px-5 py-4 sm:grid-cols-2 lg:grid-cols-6">
+            <form method="GET" action="{{ route('stok-faskes.index') }}" @submit.prevent="applyFilter()" class="grid gap-3 px-5 py-4 sm:grid-cols-2 lg:grid-cols-6">
                 <div class="lg:col-span-2">
-                    <input type="search" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Cari kode atau nama obat…" class="form-input">
+                    <input type="search" name="search" x-model="filters.search" @input.debounce.300ms="applyFilter()" placeholder="Cari kode atau nama obat…" class="form-input">
                 </div>
 
                 @unless ($lockedFaskes)
-                    <select name="fasilitas" class="form-select">
+                    <select name="fasilitas" x-model="filters.fasilitas" @change="applyFilter()" class="form-select">
                         <option value="">Semua faskes</option>
                         @foreach ($faskesList as $f)
-                            <option value="{{ $f->id }}" @selected((string) ($filters['fasilitas'] ?? '') === (string) $f->id)>{{ $f->nama }}</option>
+                            <option value="{{ $f->id }}">{{ $f->nama }}</option>
                         @endforeach
                     </select>
                 @endunless
 
-                <select name="kategori" class="form-select">
+                <select name="kategori" x-model="filters.kategori" @change="applyFilter()" class="form-select">
                     <option value="">Semua kategori</option>
                     @foreach ($kategoriList as $kategori)
-                        <option value="{{ $kategori }}" @selected(($filters['kategori'] ?? '') === $kategori)>{{ $kategori }}</option>
+                        <option value="{{ $kategori }}">{{ $kategori }}</option>
                     @endforeach
                 </select>
 
-                <select name="status_stok" data-tomselect-search="false" class="form-select">
+                <select name="status_stok" x-model="filters.status_stok" @change="applyFilter()" data-tomselect-search="false" class="form-select">
                     <option value="">Semua status</option>
-                    <option value="tersedia" @selected(($filters['status_stok'] ?? '') === 'tersedia')>Tersedia</option>
-                    <option value="menipis" @selected(($filters['status_stok'] ?? '') === 'menipis')>Menipis</option>
-                    <option value="habis" @selected(($filters['status_stok'] ?? '') === 'habis')>Habis</option>
+                    <option value="tersedia">Tersedia</option>
+                    <option value="menipis">Menipis</option>
+                    <option value="habis">Habis</option>
                 </select>
 
                 <div class="flex gap-2 sm:col-span-2 lg:col-span-1">
                     <button type="submit" class="btn btn-dark">Terapkan</button>
-                    <a href="{{ route('stok-faskes.index') }}" class="btn btn-ghost">Atur ulang</a>
+                    <button type="button" class="btn btn-ghost" @click="reset()">Atur ulang</button>
                 </div>
             </form>
+            <noscript>
+                <p class="px-5 pb-4 text-xs text-slate-500">Aktifkan JavaScript untuk filter & pagination tanpa reload.</p>
+            </noscript>
 
-            @if ($stok->isEmpty())
-                <x-ui.empty-state title="Belum ada data stok faskes" hint="Data muncul setelah ada distribusi ke faskes." icon="building-storefront" />
-            @else
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
-                        <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
-                            <tr>
+            <div x-show="error" x-cloak class="mx-5 mb-4 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+                <span x-text="error"></span>
+                <button type="button" class="font-medium underline" @click="load(meta.page)">Coba lagi</button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800" :class="{ 'opacity-50': loading }">
+                    <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
+                        <tr>
+                            @unless ($lockedFaskes)
+                                <th class="px-5 py-3 font-medium">Faskes</th>
+                            @endunless
+                            <th class="px-5 py-3 font-medium">Kode</th>
+                            <th class="px-5 py-3 font-medium">Nama</th>
+                            <th class="px-5 py-3 text-right font-medium">
+                                <button type="button" @click="setSort('jumlah')" class="uppercase tracking-wide hover:underline">
+                                    Jumlah <span x-show="sort === 'jumlah'" x-text="sortDir === 'asc' ? '↑' : '↓'"></span>
+                                </button>
+                            </th>
+                            <th class="px-5 py-3 text-right font-medium">Minimum</th>
+                            <th class="px-5 py-3 font-medium">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <template x-for="row in rows" :key="row.fasilitas_id + '-' + row.obat_id">
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
                                 @unless ($lockedFaskes)
-                                    <th class="px-5 py-3 font-medium">Faskes</th>
+                                    <td class="whitespace-nowrap px-5 py-3 text-slate-600 dark:text-slate-300" x-text="row.fasilitas ? row.fasilitas.nama : ''"></td>
                                 @endunless
-                                <th class="px-5 py-3 font-medium">Kode</th>
-                                <th class="px-5 py-3 font-medium">Nama</th>
-                                <th class="px-5 py-3 text-right font-medium">
-                                    <a href="{{ route('stok-faskes.index', array_merge(request()->query(), ['sort' => (request('sort') === 'jumlah_desc' ? 'jumlah_asc' : 'jumlah_desc')])) }}" class="hover:underline">
-                                        Jumlah {{ request('sort') === 'jumlah_desc' ? '↓' : (request('sort') === 'jumlah_asc' ? '↑' : '') }}
-                                    </a>
-                                </th>
-                                <th class="px-5 py-3 text-right font-medium">Minimum</th>
-                                <th class="px-5 py-3 font-medium">Status</th>
+                                <td class="whitespace-nowrap px-5 py-3 font-mono text-xs text-slate-600 dark:text-slate-300" x-text="row.obat ? row.obat.kode_obat : ''"></td>
+                                <td class="px-5 py-3">
+                                    <a :href="'/stok-faskes/' + row.fasilitas_id + '/' + row.obat_id" class="font-medium text-brand-700 hover:underline dark:text-brand-300" x-text="row.obat ? row.obat.nama_obat : ''"></a>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400" x-text="row.obat ? (row.obat.kategori + ' · ' + row.obat.satuan) : ''"></p>
+                                </td>
+                                <td class="whitespace-nowrap px-5 py-3 text-right font-semibold text-slate-800 dark:text-slate-100" x-text="fmtNum(row.jumlah)"></td>
+                                <td class="whitespace-nowrap px-5 py-3 text-right text-slate-600 dark:text-slate-300" x-text="fmtNum(row.stok_minimum)"></td>
+                                <td class="px-5 py-3">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                                        :class="row.jumlah <= 0 ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : ((row.stok_minimum > 0 && row.jumlah <= row.stok_minimum) ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300')"
+                                        x-text="row.jumlah <= 0 ? 'Habis' : ((row.stok_minimum > 0 && row.jumlah <= row.stok_minimum) ? 'Menipis' : 'Tersedia')"></span>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                            @foreach ($stok as $row)
-                                @php
-                                    $status = $row->jumlah <= 0 ? 'habis' : (($row->stok_minimum > 0 && $row->jumlah <= $row->stok_minimum) ? 'menipis' : 'tersedia');
-                                    $tone = $status === 'habis' ? 'red' : ($status === 'menipis' ? 'amber' : 'emerald');
-                                    $label = $status === 'habis' ? 'Habis' : ($status === 'menipis' ? 'Menipis' : 'Tersedia');
-                                @endphp
-                                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                                    @unless ($lockedFaskes)
-                                        <td class="whitespace-nowrap px-5 py-3 text-slate-600 dark:text-slate-300">{{ $row->fasilitas?->nama }}</td>
-                                    @endunless
-                                    <td class="whitespace-nowrap px-5 py-3 font-mono text-xs text-slate-600 dark:text-slate-300">{{ $row->obat?->kode_obat }}</td>
-                                    <td class="px-5 py-3">
-                                        <a href="{{ route('stok-faskes.show', [$row->fasilitas_id, $row->obat_id]) }}" class="font-medium text-brand-700 hover:underline dark:text-brand-300">
-                                            {{ $row->obat?->nama_obat }}
-                                        </a>
-                                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ $row->obat?->kategori }} &middot; {{ $row->obat?->satuan }}</p>
-                                    </td>
-                                    <td class="whitespace-nowrap px-5 py-3 text-right font-semibold text-slate-800 dark:text-slate-100">{{ number_format($row->jumlah, 0, ',', '.') }}</td>
-                                    <td class="whitespace-nowrap px-5 py-3 text-right text-slate-600 dark:text-slate-300">{{ number_format($row->stok_minimum, 0, ',', '.') }}</td>
-                                    <td class="px-5 py-3">
-                                        <x-ui.badge :tone="$tone">{{ $label }}</x-ui.badge>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        </template>
+                        <tr x-show="!loading && rows.length === 0">
+                            <td colspan="6" class="px-5 py-12 text-center">
+                                <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Tidak ada data yang cocok</p>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Ubah kata kunci atau atur ulang filter.</p>
+                            </td>
+                        </tr>
+                        <tr x-show="loading">
+                            <td colspan="6" class="px-5 py-12 text-center text-sm text-slate-500">Memuat…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                <x-ui.pagination :paginator="$stok" />
-            @endif
+            <x-ui.table-pagination />
         </section>
     </div>
 @endsection

@@ -13,7 +13,9 @@ use App\Models\StokFaskes;
 use App\Models\StokGudang;
 use App\Services\StokService;
 use App\Support\FaskesAccess;
+use App\Support\TableMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,7 +24,7 @@ class OpnameController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', OpnameStok::class);
 
@@ -48,11 +50,24 @@ class OpnameController extends Controller
 
         $query->latest('tanggal_opname')->latest('id');
 
-        $perPage = (int) ($user->preferences->items_per_halaman ?? 10);
+        $perPage = (int) $request->query('per_page', $user->preferences->items_per_halaman ?? 10);
         $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
 
+        $opnames = $query->paginate($perPage)->withQueryString();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $opnames->items(),
+                'meta' => TableMeta::from($opnames),
+            ]);
+        }
+
         return view('stok.opname.index', [
-            'opnames' => $query->paginate($perPage)->withQueryString(),
+            'initial' => [
+                'data' => $opnames->items(),
+                'meta' => TableMeta::from($opnames),
+                'filters' => $filters,
+            ],
             'filters' => $filters,
             'lockedFaskes' => $lockedFaskes,
             'faskesList' => FaskesAccess::scopeQuery(FasilitasKesehatan::query()->orderBy('nama'), $user)->get(['id', 'nama']),

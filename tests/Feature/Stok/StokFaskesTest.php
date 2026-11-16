@@ -49,10 +49,11 @@ class StokFaskesTest extends TestCase
 
         $user = $this->userWithRole('puskesmas', ['fasilitas_kesehatan_id' => $faskesA->id]);
 
-        $response = $this->actingAs($user)->get('/stok-faskes');
+        $response = $this->actingAs($user)->getJson('/stok-faskes');
 
-        $response->assertOk()->assertSee('Obat Milik Alfa Unik');
-        $response->assertDontSee('Obat Milik Beta Unik', false);
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('Obat Milik Alfa Unik', $response->json('data.0.obat.nama_obat'));
     }
 
     public function test_show_ditolak_untuk_faskes_lain(): void

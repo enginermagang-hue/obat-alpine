@@ -33,10 +33,11 @@ class RiwayatStokTest extends TestCase
         RiwayatStok::factory()->create(['tipe' => 'masuk', 'keterangan' => 'Mutasi masuk unik']);
         RiwayatStok::factory()->create(['tipe' => 'keluar', 'keterangan' => 'Mutasi keluar unik']);
 
-        $response = $this->actingAs($this->userWithRole('admin_gudang'))->get('/riwayat-stok?tipe=keluar');
+        $response = $this->actingAs($this->userWithRole('admin_gudang'))->getJson('/riwayat-stok?tipe=keluar');
 
-        $response->assertOk()->assertSee('Mutasi keluar unik');
-        $response->assertDontSee('Mutasi masuk unik', false);
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('Mutasi keluar unik', $response->json('data.0.keterangan'));
     }
 
     public function test_filter_rentang_tanggal(): void
@@ -45,10 +46,11 @@ class RiwayatStokTest extends TestCase
         RiwayatStok::factory()->create(['tanggal' => now()->toDateString(), 'keterangan' => 'Riwayat hari ini unik']);
 
         $response = $this->actingAs($this->userWithRole('admin_dinas'))
-            ->get('/riwayat-stok?dari='.now()->toDateString().'&sampai='.now()->toDateString());
+            ->getJson('/riwayat-stok?dari='.now()->toDateString().'&sampai='.now()->toDateString());
 
-        $response->assertOk()->assertSee('Riwayat hari ini unik');
-        $response->assertDontSee('Riwayat lama unik', false);
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('Riwayat hari ini unik', $response->json('data.0.keterangan'));
     }
 
     public function test_user_faskes_hanya_melihat_riwayat_sendiri(): void
@@ -60,9 +62,10 @@ class RiwayatStokTest extends TestCase
 
         $user = $this->userWithRole('puskesmas', ['fasilitas_kesehatan_id' => $faskesA->id]);
 
-        $response = $this->actingAs($user)->get('/riwayat-stok');
+        $response = $this->actingAs($user)->getJson('/riwayat-stok');
 
-        $response->assertOk()->assertSee('Riwayat Alfa unik');
-        $response->assertDontSee('Riwayat Beta unik', false);
+        $response->assertOk();
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame('Riwayat Alfa unik', $response->json('data.0.keterangan'));
     }
 }
