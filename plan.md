@@ -44,7 +44,7 @@ Referensi skema: `D:\project\obat\docs\Struktur Database.md` — ini **sumber tu
 | Services / Policies | — | ✅ 24 service + 24 policy dicopy, Filament dibersihkan |
 | Console & Cetak | — | ✅ 21 command + scheduler, 10 controller cetak, 11 view PDF |
 | Data dummy | — | ✅ 12 bulan: 18.926 pemakaian, 72 distribusi, 35 penerimaan |
-| Test | — | ✅ 26 test, 81 assertion (auth, dashboard, profil, obat, import) |
+| Test | — | ✅ 49 test, 172 assertion (auth, dashboard, profil, master) |
 | Repo git | `main` | ✅ 4 commit, working tree bersih |
 | Filament | — | ✅ tidak terpasang |
 
@@ -454,10 +454,10 @@ Alpine.start();
 | Modul | Route | Fitur |
 | --- | --- | --- |
 | Obat ✅ 16 Nov 2026 | `/obat` | list + filter kategori/status/metode, create/edit, nonaktifkan, import CSV, export Excel |
-| Fasilitas | `/fasilitas` | list puskesmas/pustu, induk puskesmas, status |
-| Sumber Dana | `/sumber-dana` | CRUD, tahun, pagu |
-| Supplier | `/supplier` | CRUD |
-| User & Role | `/users`, `/roles` | CRUD, assign role, reset password |
+| Fasilitas ✅ 16 Nov 2026 | `/fasilitas` | list puskesmas/pustu, induk puskesmas, status |
+| Sumber Dana ✅ 16 Nov 2026 | `/sumber-dana` | CRUD, tahun, pagu |
+| Supplier ✅ 16 Nov 2026 | `/supplier` | CRUD |
+| User & Role ✅ 16 Nov 2026 | `/users`, `/roles` | CRUD, assign role, reset password |
 | Pengaturan Laporan | `/pengaturan/laporan` | kop surat, TTD, format nomor, PDF (per faskes) |
 | Preferensi | `/profil` | avatar, bahasa, sidebar/topbar, item per halaman |
 
@@ -640,4 +640,5 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
 3. **Fase 0c** ✅: spatie permission/activitylog terpasang & terbit, seeder master + akun jalan, `schema-diff` 0 selisih (sqlite & mysql).
 4. **Fase 1a** ✅: layout + auth + dashboard + profil, menu role-aware, dark mode, 12 test hijau.
 5. **Fase 1b** ✅: 24 service + 24 policy + 21 command + 10 controller cetak dicopy, Filament dibersihkan, data dummy 12 bulan + 318 model AI terlatih.
-6. **Fase 2a** ✅: modul Obat selesai (controller + request + factory + modal + komponen UI + import job + 14 test baru, total 26 hijau). Lanjut Fase 2b: Fasilitas, Sumber Dana, Supplier, User & Role.
+6. **Fase 2** ✅: 5 modul master selesai (obat, fasilitas, sumber dana, supplier, users & roles) —
+   49 test hijau. Lanjut Fase 3 (Stok & batch).
