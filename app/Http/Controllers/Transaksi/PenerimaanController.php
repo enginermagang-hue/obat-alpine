@@ -4,13 +4,12 @@ namespace App\Http\Controllers\Transaksi;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PenerimaanRequest;
-use App\Models\BatchStok;
 use App\Models\FasilitasKesehatan;
-use App\Models\Obat;
 use App\Models\PenerimaanStok;
 use App\Models\RiwayatStok;
 use App\Models\SumberDana;
 use App\Models\Supplier;
+use App\Models\User;
 use App\Services\NotificationService;
 use App\Services\StokService;
 use App\Support\FaskesAccess;
@@ -208,7 +207,12 @@ class PenerimaanController extends Controller
                 ->with('error', 'Hanya penerimaan draft yang dapat dikonfirmasi.');
         }
 
-        $stokService->prosesPenerimaan($penerimaan->loadMissing('details'));
+        if ($penerimaan->tipe === 'distribusi' && $penerimaan->distribusi_id) {
+            $stokService->prosesPenerimaanDistribusi($penerimaan->loadMissing('details'));
+        } else {
+            $stokService->prosesPenerimaan($penerimaan->loadMissing('details'));
+        }
+
         $penerimaan->update(['status' => 'dikonfirmasi']);
 
         $notifikasi->notifyRole(
@@ -232,6 +236,16 @@ class PenerimaanController extends Controller
 
         $stokService->reversePenerimaan($penerimaan->loadMissing('details'), $penerimaan->details);
         $penerimaan->update(['status' => 'dibatalkan']);
+
+        if ($penerimaan->tipe === 'distribusi' && $penerimaan->distribusi) {
+            if ($penerimaan->distribusi->status === 'diterima') {
+                $penerimaan->distribusi->update(['status' => 'dalam_pengiriman', 'tanggal_terima' => null]);
+            }
+
+            if ($penerimaan->distribusi->permintaan?->status === 'diterima') {
+                $penerimaan->distribusi->permintaan->update(['status' => 'sedang_didistribusi']);
+            }
+        }
 
         return redirect()->route('penerimaan.show', $penerimaan)->with('success', 'Penerimaan dibatalkan. Stok dikembalikan.');
     }
@@ -269,7 +283,7 @@ class PenerimaanController extends Controller
     /**
      * @return array<string, int|float>
      */
-    private function kpi(\App\Models\User $user, bool $lockedFaskes): array
+    private function kpi(User $user, bool $lockedFaskes): array
     {
         $scoped = fn () => PenerimaanStok::query()
             ->when($lockedFaskes, fn ($q) => $q->where('fasilitas_id', $user->fasilitas_kesehatan_id));

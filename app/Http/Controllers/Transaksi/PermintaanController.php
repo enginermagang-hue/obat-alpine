@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Transaksi;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PermintaanRequest;
 use App\Models\FasilitasKesehatan;
-use App\Models\Obat;
 use App\Models\PermintaanObat;
+use App\Models\User;
 use App\Services\NotificationService;
 use App\Support\FaskesAccess;
 use App\Support\TableMeta;
@@ -14,6 +14,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class PermintaanController extends Controller
@@ -273,7 +274,7 @@ class PermintaanController extends Controller
     /**
      * Batasi daftar sesuai aturan PermintaanObatPolicy::view.
      */
-    private function scopeList($query, \App\Models\User $user): void
+    private function scopeList($query, User $user): void
     {
         if ($user->hasRole('super_admin') || $user->hasRole('admin_dinas') || $user->hasRole('admin_gudang')) {
             $query->where('tipe_permintaan', 'puskesmas_ke_dinas');
@@ -312,9 +313,9 @@ class PermintaanController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, FasilitasKesehatan>
+     * @return Collection<int, FasilitasKesehatan>
      */
-    private function faskesOptions(\App\Models\User $user)
+    private function faskesOptions(User $user)
     {
         if (blank($user->fasilitas_kesehatan_id)) {
             return FasilitasKesehatan::query()->orderBy('nama')->get(['id', 'nama']);

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Transaksi;
 
 use App\Models\BatchStok;
+use App\Models\FasilitasKesehatan;
 use App\Models\Obat;
 use App\Models\PenerimaanStok;
 use App\Models\StokGudang;
@@ -146,8 +147,8 @@ class PenerimaanTest extends TestCase
 
     public function test_user_faskes_terkunci_di_faskes_sendiri(): void
     {
-        $faskesA = \App\Models\FasilitasKesehatan::factory()->create();
-        $faskesB = \App\Models\FasilitasKesehatan::factory()->create();
+        $faskesA = FasilitasKesehatan::factory()->create();
+        $faskesB = FasilitasKesehatan::factory()->create();
         $obat = Obat::factory()->create();
         PenerimaanStok::factory()->create(['fasilitas_id' => $faskesB->id]);
 

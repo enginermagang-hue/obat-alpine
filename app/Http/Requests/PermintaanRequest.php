@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Models\PermintaanObat;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class PermintaanRequest extends FormRequest
 {

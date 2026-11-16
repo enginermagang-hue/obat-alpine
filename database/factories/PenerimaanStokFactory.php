@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Obat;
 use App\Models\PenerimaanStok;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,7 +22,7 @@ class PenerimaanStokFactory extends Factory
         return [
             'tipe' => 'pembelian',
             'tanggal_penerimaan' => fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
-            'user_id' => \App\Models\User::factory(),
+            'user_id' => User::factory(),
             'status' => 'draft',
             'total_biaya' => 0,
         ];

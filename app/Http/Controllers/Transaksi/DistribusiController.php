@@ -4,16 +4,15 @@ namespace App\Http\Controllers\Transaksi;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DistribusiRequest;
-use App\Models\BatchStok;
 use App\Models\DetailDistribusiObat;
 use App\Models\DistribusiObat;
 use App\Models\FasilitasKesehatan;
 use App\Models\Obat;
 use App\Models\PenerimaanStok;
 use App\Models\PermintaanObat;
+use App\Models\User;
 use App\Services\FefoService;
 use App\Services\NotificationService;
-use App\Services\StokService;
 use App\Support\FaskesAccess;
 use App\Support\TableMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -321,7 +320,7 @@ class DistribusiController extends Controller
     /**
      * Batasi daftar sesuai aturan DistribusiObatPolicy::view.
      */
-    private function scopeList($query, \App\Models\User $user): void
+    private function scopeList($query, User $user): void
     {
         if ($user->hasRole('super_admin') || $user->hasRole('admin_dinas')) {
             return;
