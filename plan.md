@@ -517,16 +517,21 @@ Submit tetap `POST` biasa dengan `details[i][obat_id]` dst., sehingga validasi s
 
 ---
 
-## 10. Fase 6 — Pelaporan, perencanaan & cut-off
+## 10. Fase 6 — Pelaporan, perencanaan & cut-off (✅)
 
-| Modul | Isi |
-| --- | --- |
-| LPLPO | header per faskes/periode + detail; verifikasi Dinas (`status_verifikasi`) |
-| RKO | rencana tahunan, detail ABC/VEN, buffer, prediksi referensi |
-| Neraca Tahunan | header + detail + rincian per sumber dana |
-| Tutup Buku | inisial/tahunan, deadline, reminder, buka kembali |
-| Alokasi Dana | perencanaan/realisasi/alokasi per sumber dana |
-| Cetak | PDF LPLPO, RKO, neraca, faktur distribusi/penerimaan/permintaan/retur; Excel obat & RKO |
+| Modul | Isi | Test |
+| --- | --- | --- |
+| LPLPO | generate detail dari riwayat, verifikasi dinas, revisi (duplikat draft) | 6 |
+| RKO | preview service, periode dari pengaturan, approve dinas | 6 |
+| Neraca Tahunan | generate dari stok, selesai/buka kembali + guard tahun | 4 |
+| Tutup Buku | cut-off inisial/tahunan, buka-tutup kembali, lock transaksi | 4 |
+| Alokasi Dana | KPI + tabel ringkasan + grafik bar/doughnut/tren (Chart.js `x-chart`) | 4 |
+| Pengaturan Laporan | panel buka akses RKO global + override per faskes | 4 |
+| Cetak | route PDF LPLPO/RKO/neraca/faktur distribusi/penerimaan/retur/permintaan + surat + Excel; test 404 draft | 2 |
+
+Perbaikan penting: `StokService`/`NeracaTahunanService` menerima `TutupBukuService` wajib
+(sebelumnya nullable → container mengisi `null` dan semua proteksi tanggal diam-diam
+dilewati). Test `TutupBukuTest::test_tutup_tahun_mengunci_transaksi_lama` menangkapnya.
 
 ---
 
@@ -603,15 +608,15 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
 - [x] PemakaianObats
 - [x] ReturObats
 - [x] InspeksiReturs
-- [ ] LaporanLplpos
-- [ ] LaporanRkos
-- [ ] NeracaTahunans
-- [ ] TutupBuku
-- [ ] AlokasiDana
+- [x] LaporanLplpos
+- [x] LaporanRkos
+- [x] NeracaTahunans
+- [x] TutupBuku
+- [x] AlokasiDana
 - [ ] DashboardAi
-- [ ] Cluster Pengaturan (laporan, PDF, format nomor)
+- [x] Cluster Pengaturan (laporan, PDF, format nomor)
 - [ ] Halaman Panduan
-- [ ] Cetak PDF/Excel (10 controller `Cetak*`)
+- [x] Cetak PDF/Excel (10 controller `Cetak*`)
 
 ---
 
@@ -647,4 +652,4 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
    test tabel via kontrak JSON (total 78 hijau).
 8. **Fase 4** ✅: penerimaan (6), permintaan (7), distribusi (7), pemakaian (6),
    retur (7), inspeksi (5) — total 116 hijau.
-   Lanjut Fase 6 (Pelaporan & cetak).
+   Lanjut Fase 7 (Prediksi AI & dashboard).

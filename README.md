@@ -35,7 +35,10 @@ Rencana kerja lengkap & status per fase: [`plan.md`](plan.md).
 | 1b | 24 service, 24 policy, 21 command, 10 controller cetak, data dummy + model AI | ✅ |
 | 2 | Master data (5 modul: Obat, Faskes, Sumber Dana, Supplier, User & Role) | ✅ |
 | 3 | Stok & batch (Stok Gudang/Faskes, Batch, Riwayat, Opname; tabel Alpine server-backed) | ✅ |
-| 3–8 | Stok, transaksi, laporan, prediksi, backlog | ⏳ |
+| 4 | Transaksi inti (Penerimaan, Permintaan, Distribusi, Pemakaian, Retur, Inspeksi) | ✅ |
+| 5 | Pemakaian & retur (FEFO auto-split, 3 tipe retur, inspeksi tanpa ubah stok) | ✅ |
+| 6 | Pelaporan & cut-off (LPLPO, RKO, Neraca, Tutup Buku, Alokasi Dana, Pengaturan, Cetak) | ✅ |
+| 7–8 | Prediksi AI, dashboard, backlog | ⏳ |
 
 Data dummy saat ini: 12 bulan (Des 2025 – Nov 2026), 18.926 pemakaian, 4.419 batch,
 72 distribusi, 72 permintaan, 72 LPLPO, 6 RKO, dan 318 model AI terlatih.
@@ -231,7 +234,8 @@ routes/console.php                  # scheduler
    Inspeksi Retur (satu per detail, tanpa mengubah stok).
    Perbaikan: `reverseOpname` memulihkan batch; auto-number surat jalan & pemakaian;
    policy aksi khusus (`confirm/cancel/submit/approve/send/receive/complete`).
-5. Route cetak (10 controller) belum dipasang — dipasang bersama modul laporan (Fase 6).
+5. Route cetak (10 controller) ✅ terpasang bersama modul laporan (Fase 6):
+   PDF LPLPO/RKO/neraca + faktur distribusi/penerimaan/retur/permintaan + surat + Excel.
 6. `PanduanController` + view panduan belum dibawa (butuh konten Markdown dari project lama).
 7. Notifikasi database (`AppNotification`) sudah tersimpan, tapi belum ada halaman inbox/bell.
 8. Tambah test fitur per modul; pertimbangkan konversi ke Pest (§5.1 `plan.md`).
