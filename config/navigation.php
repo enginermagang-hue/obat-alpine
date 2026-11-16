@@ -48,11 +48,11 @@ return [
     [
         'label' => 'Laporan',
         'items' => [
-            ['label' => 'LPLPO', 'route' => 'lplpo.index', 'icon' => 'document-chart-bar', 'roles' => []],
-            ['label' => 'RKO', 'route' => 'rko.index', 'icon' => 'chart-bar', 'roles' => []],
-            ['label' => 'Neraca Tahunan', 'route' => 'neraca.index', 'icon' => 'scale', 'roles' => []],
-            ['label' => 'Tutup Buku', 'route' => 'tutup-buku.index', 'icon' => 'lock-closed', 'roles' => ['super_admin', 'admin_dinas']],
-            ['label' => 'Alokasi Dana', 'route' => 'alokasi-dana.index', 'icon' => 'calculator', 'roles' => ['super_admin', 'admin_dinas']],
+            ['label' => 'LPLPO', 'route' => 'lplpo.index', 'icon' => 'document-chart-bar', 'roles' => [], 'permission' => 'view_laporan_lplpo'],
+            ['label' => 'RKO', 'route' => 'rko.index', 'icon' => 'chart-bar', 'roles' => [], 'permission' => 'view_laporan_rko'],
+            ['label' => 'Neraca Tahunan', 'route' => 'neraca.index', 'icon' => 'scale', 'roles' => [], 'permission' => 'view_neraca_tahunan'],
+            ['label' => 'Tutup Buku', 'route' => 'tutup-buku.index', 'icon' => 'lock-closed', 'roles' => [], 'permission' => 'view_tutup_buku'],
+            ['label' => 'Alokasi Dana', 'route' => 'alokasi-dana.index', 'icon' => 'calculator', 'roles' => [], 'permission' => 'view_alokasi_dana'],
         ],
     ],
     [
@@ -65,6 +65,7 @@ return [
         'label' => 'Pengaturan',
         'items' => [
             ['label' => 'Profil & Preferensi', 'route' => 'profil.edit', 'icon' => 'user-circle', 'roles' => []],
+            ['label' => 'Pengaturan Laporan', 'route' => 'pengaturan-laporan.index', 'icon' => 'cog-6-tooth', 'roles' => [], 'permission' => 'view_pengaturan_laporan'],
             ['label' => 'Panduan', 'route' => 'panduan.index', 'icon' => 'book-open', 'roles' => []],
         ],
     ],

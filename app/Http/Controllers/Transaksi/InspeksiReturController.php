@@ -101,44 +101,44 @@ class InspeksiReturController extends Controller
         return redirect()->route('inspeksi-retur.index')->with('success', 'Hasil inspeksi berhasil dicatat (tidak mengubah stok).');
     }
 
-    public function show(InspeksiRetur $inspeksiRetur): View
+    public function show(InspeksiRetur $inspeksi_retur): View
     {
-        $this->authorize('view', $inspeksiRetur);
+        $this->authorize('view', $inspeksi_retur);
 
-        $inspeksiRetur->loadMissing([
+        $inspeksi_retur->loadMissing([
             'retur:id,nomor_retur,status', 'detailRetur.obat:id,nama_obat',
             'batch:id,batch_number,tanggal_expired', 'inspector:id,name',
         ]);
 
         return view('transaksi.inspeksi.show', [
-            'inspeksi' => $inspeksiRetur,
+            'inspeksi' => $inspeksi_retur,
         ]);
     }
 
-    public function edit(InspeksiRetur $inspeksiRetur): View
+    public function edit(InspeksiRetur $inspeksi_retur): View
     {
-        $this->authorize('update', $inspeksiRetur);
+        $this->authorize('update', $inspeksi_retur);
 
-        $inspeksiRetur->loadMissing(['retur', 'detailRetur.obat:id,nama_obat', 'batch:id,batch_number']);
+        $inspeksi_retur->loadMissing(['retur', 'detailRetur.obat:id,nama_obat', 'batch:id,batch_number']);
 
         return view('transaksi.inspeksi.form', [
-            'inspeksi' => $inspeksiRetur,
-            'retur' => $inspeksiRetur->retur()->with('details.obat:id,nama_obat', 'details.batch:id,batch_number')->first(),
+            'inspeksi' => $inspeksi_retur,
+            'retur' => $inspeksi_retur->retur()->with('details.obat:id,nama_obat', 'details.batch:id,batch_number')->first(),
             'returList' => $this->returTerbuka(),
-            'oldDetail' => old('detail_retur_id', $inspeksiRetur->detail_retur_id),
-            'oldBatch' => old('batch_id', $inspeksiRetur->batch_id),
+            'oldDetail' => old('detail_retur_id', $inspeksi_retur->detail_retur_id),
+            'oldBatch' => old('batch_id', $inspeksi_retur->batch_id),
         ]);
     }
 
-    public function update(InspeksiRequest $request, InspeksiRetur $inspeksiRetur): RedirectResponse
+    public function update(InspeksiRequest $request, InspeksiRetur $inspeksi_retur): RedirectResponse
     {
         $data = $request->validated();
 
-        $this->assertKonsisten($data, $inspeksiRetur->id);
+        $this->assertKonsisten($data, $inspeksi_retur->id);
 
-        $inspeksiRetur->update($data);
+        $inspeksi_retur->update($data);
 
-        return redirect()->route('inspeksi-retur.show', $inspeksiRetur)->with('success', 'Hasil inspeksi berhasil diperbarui (tidak mengubah stok).');
+        return redirect()->route('inspeksi-retur.show', $inspeksi_retur)->with('success', 'Hasil inspeksi berhasil diperbarui (tidak mengubah stok).');
     }
 
     /**

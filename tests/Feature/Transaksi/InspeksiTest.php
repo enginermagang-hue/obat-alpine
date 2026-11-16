@@ -119,6 +119,28 @@ class InspeksiTest extends TestCase
         $this->assertSame(1, InspeksiRetur::count());
     }
 
+    public function test_show_menampilkan_data_asli(): void
+    {
+        $gudang = $this->userWithRole('admin_gudang');
+        $retur = $this->returSiapInspeksi();
+        $detail = $retur->details()->first();
+
+        $inspeksi = InspeksiRetur::create([
+            'retur_id' => $retur->id,
+            'detail_retur_id' => $detail->id,
+            'batch_id' => $detail->batch_id,
+            'hasil_inspeksi' => 'layak',
+            'tindakan' => 'didistribusi_kembali',
+            'tanggal_inspeksi' => now()->toDateString(),
+            'inspected_by' => $gudang->id,
+        ]);
+
+        $this->actingAs($gudang)
+            ->get("/inspeksi-retur/{$inspeksi->id}")
+            ->assertOk()
+            ->assertSee($retur->nomor_retur);
+    }
+
     public function test_puskesmas_bisa_inspeksi_sebagai_penerima(): void
     {
         $induk = FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);

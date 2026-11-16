@@ -19,14 +19,14 @@ use Illuminate\Support\Facades\DB;
 
 class NeracaTahunanService extends LaporanBaseService
 {
-    public function __construct(private readonly ?TutupBukuService $tutupBukuService = null) {}
+    public function __construct(private readonly TutupBukuService $tutupBukuService) {}
 
     /**
      * Generate annual stock balance details for a given NeracaTahunan record.
      */
     public function generate(NeracaTahunan $neraca): void
     {
-        if ($this->tutupBukuService && $this->tutupBukuService->isTahunTerkunci($neraca->tahun)) {
+        if ($this->tutupBukuService->isTahunTerkunci($neraca->tahun)) {
             throw new \RuntimeException("Tahun {$neraca->tahun} sudah tutup buku. Buka kembali terlebih dahulu untuk generate ulang.");
         }
 

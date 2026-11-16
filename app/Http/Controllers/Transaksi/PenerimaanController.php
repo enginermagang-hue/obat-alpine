@@ -207,10 +207,17 @@ class PenerimaanController extends Controller
                 ->with('error', 'Hanya penerimaan draft yang dapat dikonfirmasi.');
         }
 
-        if ($penerimaan->tipe === 'distribusi' && $penerimaan->distribusi_id) {
-            $stokService->prosesPenerimaanDistribusi($penerimaan->loadMissing('details'));
-        } else {
-            $stokService->prosesPenerimaan($penerimaan->loadMissing('details'));
+        try {
+            if ($penerimaan->tipe === 'distribusi' && $penerimaan->distribusi_id) {
+                $stokService->prosesPenerimaanDistribusi($penerimaan->loadMissing('details'));
+            } else {
+                $stokService->prosesPenerimaan($penerimaan->loadMissing('details'));
+            }
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()->route('penerimaan.show', $penerimaan)
+                ->with('error', 'Gagal mengonfirmasi: '.$e->getMessage());
         }
 
         $penerimaan->update(['status' => 'dikonfirmasi']);

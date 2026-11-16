@@ -21,14 +21,14 @@ use Illuminate\Support\Facades\DB;
 
 class StokService
 {
-    public function __construct(private readonly ?TutupBukuService $tutupBukuService = null) {}
+    public function __construct(private readonly TutupBukuService $tutupBukuService) {}
 
     /**
      * Proses penerimaan stok: update batch, update stok agregat, catat riwayat.
      */
     public function prosesPenerimaan(PenerimaanStok $penerimaan): void
     {
-        $this->tutupBukuService?->assertTanggalTidakTerkunci($penerimaan->tanggal_penerimaan, 'Penerimaan stok');
+        $this->tutupBukuService->assertTanggalTidakTerkunci($penerimaan->tanggal_penerimaan, 'Penerimaan stok');
 
         foreach ($penerimaan->details as $detail) {
             $this->prosesBatchDariPenerimaan($detail, $penerimaan);
@@ -83,7 +83,7 @@ class StokService
      */
     public function prosesPenerimaanDistribusi(PenerimaanStok $penerimaan): void
     {
-        $this->tutupBukuService?->assertTanggalTidakTerkunci($penerimaan->tanggal_penerimaan, 'Penerimaan distribusi');
+        $this->tutupBukuService->assertTanggalTidakTerkunci($penerimaan->tanggal_penerimaan, 'Penerimaan distribusi');
 
         if ($penerimaan->tipe !== 'distribusi') {
             throw new \InvalidArgumentException(
@@ -217,7 +217,7 @@ class StokService
      */
     public function prosesOpnameSelesai(OpnameStok $opname): void
     {
-        $this->tutupBukuService?->assertTanggalTidakTerkunci($opname->tanggal_opname, 'Opname stok');
+        $this->tutupBukuService->assertTanggalTidakTerkunci($opname->tanggal_opname, 'Opname stok');
 
         foreach ($opname->details as $detail) {
             $selisih = $detail->selisih;
@@ -502,7 +502,7 @@ class StokService
 
     public function assertPemakaianTidakTerkunci(PemakaianObat $pemakaian): void
     {
-        $this->tutupBukuService?->assertTanggalTidakTerkunci($pemakaian->tanggal_pemakaian, 'Pemakaian obat');
+        $this->tutupBukuService->assertTanggalTidakTerkunci($pemakaian->tanggal_pemakaian, 'Pemakaian obat');
     }
 
     /**

@@ -24,6 +24,7 @@ use App\Http\Controllers\CetakRkoController;
 use App\Http\Controllers\Laporan\LplpoController;
 use App\Http\Controllers\Laporan\NeracaController;
 use App\Http\Controllers\Laporan\RkoController;
+use App\Http\Controllers\Laporan\TutupBukuController;
 use App\Http\Controllers\Transaksi\DistribusiController;
 use App\Http\Controllers\Transaksi\InspeksiReturController;
 use App\Http\Controllers\Transaksi\PemakaianController;
@@ -133,6 +134,11 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('cetak/neraca/{neraca}', [CetakNeracaController::class, 'cetakPdf'])->name('neraca.cetak-pdf');
     Route::get('cetak/neraca/{neraca}/xls', [CetakNeracaController::class, 'cetakXls'])->name('neraca.cetak-xls');
+
+    Route::post('tutup-buku', [TutupBukuController::class, 'store'])->name('tutup-buku.store');
+    Route::patch('tutup-buku/{tutupBuku}/buka-kembali', [TutupBukuController::class, 'bukaKembali'])->name('tutup-buku.buka-kembali');
+    Route::patch('tutup-buku/{tutupBuku}/tutup-kembali', [TutupBukuController::class, 'tutupKembali'])->name('tutup-buku.tutup-kembali');
+    Route::get('tutup-buku', [TutupBukuController::class, 'index'])->name('tutup-buku.index');
 
     Route::patch('retur/{retur}/submit', [ReturController::class, 'submit'])->name('retur.submit');
     Route::patch('retur/{retur}/approve', [ReturController::class, 'approve'])->name('retur.approve');
