@@ -134,11 +134,14 @@ app/
     Transaksi/PenerimaanController.php # draft/konfirmasi/batal + scope faskes
     Transaksi/PermintaanController.php # ajukan/setujui-tolak per baris + scope tipe
     Transaksi/DistribusiController.php # auto-split FEFO, kirim/batal/tolak/buat-penerimaan
+    Transaksi/PemakaianController.php # auto-split FEFO, edit/hapus hari ini
+    Transaksi/ReturController.php # 3 tipe, ajukan/setujui/tolak/kirim/terima/selesai + upload bukti
+    Transaksi/InspeksiReturController.php # list/form, satu inspeksi per detail, tanpa ubah stok
     Master/ImportObatController.php # upload CSV + template (job async)
     CetakObatExcelController.php    # export Excel master obat (filter dari index)
     Cetak*.php                      # 10 controller PDF/Excel (reuse project lama)
   Http/Middleware/SetLocaleFromPreferences.php
-  Http/Requests/                    # Login, Profil, Obat, Faskes, Dana, Supplier, User, Opname, Penerimaan, Permintaan, Distribusi
+  Http/Requests/                    # Login, Profil, Obat, Faskes, Dana, Supplier, User, Opname, Penerimaan, Permintaan, Distribusi, Pemakaian, Retur, Inspeksi
   Jobs/ImportObatJob.php          # import CSV obat (upsert by kode_obat)
   Policies/                         # 25 policy (BatchStokPolicy baru Fase 3)
   Support/FaskesAccess.php          # visibleFasilitasIds + scopeQuery (dipakai semua list stok)
@@ -147,8 +150,8 @@ app/
   Notifications/AppNotification.php # notifikasi database (pengganti Filament)
   Console/Commands/                 # 21 command (AI, tutup buku, cleanup, docs)
 config/navigation.php               # menu sidebar/topbar (filter route + role + permission)
-database/factories/                 # User, Obat, Faskes, SumberDana, Supplier, BatchStok, RiwayatStok,
-                                  # Penerimaan, Permintaan, Distribusi
+database/factories/                 # User, Obat, Faskes, Dana, Supplier, BatchStok, RiwayatStok,
+                                  # Penerimaan, Permintaan, Distribusi, Pemakaian, Retur
 database/schema-diff.php            # verifier paritas skema (SQlite & MySQL)
 resources/js/components/modal.js    # Alpine.data('modal') reuse semua modul
 resources/js/components/docForm.js  # Alpine.data('opnameForm') form multi-baris
@@ -165,6 +168,9 @@ resources/views/
   transaksi/penerimaan/             # index + form + show (konfirmasi/batal)
   transaksi/permintaan/             # index + form + show (tinjau/setujui/tolak)
   transaksi/distribusi/             # index + form + show (kirim/buat-penerimaan)
+  transaksi/pemakaian/              # index + form + show (auto-split FEFO)
+  transaksi/retur/                  # index + form + show (alur 7 status)
+  transaksi/inspeksi/               # index + form + show (tanpa ubah stok)
   auth/login.blade.php
   dashboard.blade.php
   profil/edit.blade.php
@@ -217,12 +223,14 @@ routes/console.php                  # scheduler
    payload per halaman ±10 KB, scope faskes tetap di SQL, URL tersinkron
    (bookmark & back jalan), link Export Excel ikut filter aktif.
    Test tabel diubah ke kontrak JSON (`GET ?x=y` → `{data, meta}`); test show/detail tetap SSR.
-4. **Fase 4 — Transaksi inti (✅ sebagian: penerimaan, permintaan, distribusi)**:
-   Penerimaan (draft/konfirmasi/batal, scope faskes), Permintaan (auto tipe & tujuan,
-   ajukan, tinjau jumlah per baris, setujui/tolak), Distribusi (auto-split FEFO server-side,
-   preview alokasi, kirim/batalkan/tolak, buat penerimaan tertaut).
-   Nomor surat jalan auto dari `NomorFormatService`; policy `confirm/cancel` khusus.
-   Menyusul: pemakaian & retur (Fase 5), cetak faktur (Fase 6).
+4. **Fase 4 — Transaksi inti (✅)**: Penerimaan (draft/konfirmasi/batal, scope faskes),
+   Permintaan (auto tipe & tujuan, ajukan, tinjau jumlah per baris, setujui/tolak),
+   Distribusi (auto-split FEFO server-side, preview alokasi, kirim/batalkan/tolak,
+   buat penerimaan tertaut), Pemakaian (auto-split FEFO, edit/hapus hanya hari ini),
+   Retur 3 tipe (ajukan/setujui/tolak/kirim/terima/selesai, upload bukti),
+   Inspeksi Retur (satu per detail, tanpa mengubah stok).
+   Perbaikan: `reverseOpname` memulihkan batch; auto-number surat jalan & pemakaian;
+   policy aksi khusus (`confirm/cancel/submit/approve/send/receive/complete`).
 5. Route cetak (10 controller) belum dipasang — dipasang bersama modul laporan (Fase 6).
 6. `PanduanController` + view panduan belum dibawa (butuh konten Markdown dari project lama).
 7. Notifikasi database (`AppNotification`) sudah tersimpan, tapi belum ada halaman inbox/bell.

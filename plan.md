@@ -44,7 +44,7 @@ Referensi skema: `D:\project\obat\docs\Struktur Database.md` — ini **sumber tu
 | Services / Policies | — | ✅ 24 service + 24 policy dicopy, Filament dibersihkan |
 | Console & Cetak | — | ✅ 21 command + scheduler, 10 controller cetak, 11 view PDF |
 | Data dummy | — | ✅ 12 bulan: 18.926 pemakaian, 72 distribusi, 35 penerimaan |
-| Test | — | ✅ 98 test, 339 assertion (auth, dashboard, profil, master, stok, transaksi) |
+| Test | — | ✅ 116 test, 399 assertion (auth, dashboard, profil, master, stok, transaksi) |
 | Repo git | `main` | ✅ 4 commit, working tree bersih |
 | Filament | — | ✅ tidak terpasang |
 
@@ -600,9 +600,9 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
 - [x] PenerimaanStoks
 - [x] DistribusiObats
 - [x] PermintaanObats
-- [ ] PemakaianObats
-- [ ] ReturObats
-- [ ] InspeksiReturs
+- [x] PemakaianObats
+- [x] ReturObats
+- [x] InspeksiReturs
 - [ ] LaporanLplpos
 - [ ] LaporanRkos
 - [ ] NeracaTahunans
@@ -645,5 +645,6 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
    7b. **Fase 3.5** ✅: 10 tabel index pindah ke Alpine server-backed (`dataTable` + `table-pagination`
    + `TableMeta`); filter/sort/pagination tanpa reload, URL tersinkron, export ikut filter;
    test tabel via kontrak JSON (total 78 hijau).
-8. **Fase 4 (sebagian)** ✅: penerimaan (6 test), permintaan (7), distribusi (7) —
-   total 98 hijau. Menyusul: pemakaian & retur (Fase 5).
+8. **Fase 4** ✅: penerimaan (6), permintaan (7), distribusi (7), pemakaian (6),
+   retur (7), inspeksi (5) — total 116 hijau.
+   Lanjut Fase 6 (Pelaporan & cetak).
