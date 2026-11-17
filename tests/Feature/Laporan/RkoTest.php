@@ -6,9 +6,11 @@ use App\Models\FasilitasKesehatan;
 use App\Models\LaporanRko;
 use App\Models\Obat;
 use App\Models\PengaturanLaporan;
+use App\Models\StokFaskes;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -143,7 +145,75 @@ class RkoTest extends TestCase
 
     public function test_cetak_route_terdaftar(): void
     {
-        $this->assertTrue(\Illuminate\Support\Facades\Route::has('rko.cetak-pdf'));
-        $this->assertTrue(\Illuminate\Support\Facades\Route::has('rko.cetak-xls'));
+        $this->assertTrue(Route::has('rko.cetak-pdf'));
+        $this->assertTrue(Route::has('rko.cetak-xls'));
+    }
+
+    public function test_super_admin_create_tanpa_faskes_tidak_type_error(): void
+    {
+        $super = $this->userWithRole('super_admin');
+
+        $this->actingAs($super)->get('/rko/create')
+            ->assertOk()
+            ->assertSee('Pilih fasilitas', false);
+    }
+
+    public function test_super_admin_create_dengan_faskes_memuat_preview(): void
+    {
+        $super = $this->userWithRole('super_admin');
+        $faskes = FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
+        $obat = Obat::factory()->create();
+        StokFaskes::create(['fasilitas_id' => $faskes->id, 'obat_id' => $obat->id, 'jumlah' => 10]);
+
+        $this->actingAs($super)->get('/rko/create?fasilitas_id='.$faskes->id)
+            ->assertOk()
+            ->assertViewHas('previewCount', fn ($c) => $c > 0);
+    }
+
+    public function test_super_admin_store_tanpa_faskes_kembali_validasi(): void
+    {
+        $super = $this->userWithRole('super_admin');
+
+        $this->actingAs($super)->post('/rko', [
+            'tanggal_pembuatan' => now()->toDateString(),
+        ])->assertSessionHasErrors('fasilitas_id');
+
+        $this->assertSame(0, LaporanRko::count());
+    }
+
+    public function test_super_admin_store_dengan_faskes_berhasil(): void
+    {
+        $super = $this->userWithRole('super_admin');
+        $faskes = FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
+        $this->bukaAkses($faskes->id, (int) now()->addYear()->format('Y'));
+        $obat = Obat::factory()->create();
+
+        $this->actingAs($super)->post('/rko', [
+            'fasilitas_id' => $faskes->id,
+            'tanggal_pembuatan' => now()->toDateString(),
+            'rows' => [['obat_id' => $obat->id, 'usulan' => 5]],
+        ])->assertRedirect();
+
+        $this->assertSame(1, LaporanRko::where('fasilitas_id', $faskes->id)->count());
+    }
+
+    public function test_puskesmas_tidak_bisa_membajak_faskes_lain(): void
+    {
+        $faskesA = FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
+        $faskesB = FasilitasKesehatan::factory()->create(['tipe' => 'puskesmas']);
+        $tahun = (int) now()->addYear()->format('Y');
+        $this->bukaAkses($faskesA->id, $tahun);
+        $this->bukaAkses($faskesB->id, $tahun);
+        $user = $this->userWithRole('puskesmas', ['fasilitas_kesehatan_id' => $faskesA->id]);
+        $obat = Obat::factory()->create();
+
+        $this->actingAs($user)->post('/rko', [
+            'fasilitas_id' => $faskesB->id,
+            'tanggal_pembuatan' => now()->toDateString(),
+            'rows' => [['obat_id' => $obat->id, 'usulan' => 5]],
+        ])->assertRedirect();
+
+        $this->assertSame(1, LaporanRko::where('fasilitas_id', $faskesA->id)->count());
+        $this->assertSame(0, LaporanRko::where('fasilitas_id', $faskesB->id)->count());
     }
 }

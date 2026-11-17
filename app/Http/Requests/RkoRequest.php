@@ -22,6 +22,7 @@ class RkoRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'fasilitas_id' => ['nullable', 'integer', 'exists:fasilitas_kesehatan,id'],
             'tanggal_pembuatan' => ['required', 'date'],
             'catatan' => ['nullable', 'string'],
             'rows' => ['nullable', 'array'],

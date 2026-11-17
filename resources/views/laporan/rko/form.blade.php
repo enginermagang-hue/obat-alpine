@@ -45,13 +45,27 @@
 
             <section class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div class="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-                    <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Header RKO — {{ $faskesNama }} ({{ $tahun }})</h2>
-                    @if (! $isEdit && $previewCount > 0)
+                    <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Header RKO — {{ $faskesNama ?? 'Pilih fasilitas' }} ({{ $tahun }})</h2>
+                    @if (! $isEdit && ($isSuperAdmin ?? false) && blank($selectedFaskesId ?? null))
+                        <p class="mt-1 text-xs text-amber-600 dark:text-amber-400">Pilih fasilitas terlebih dahulu untuk memuat preview otomatis.</p>
+                    @elseif (! $isEdit && $previewCount > 0)
                         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $previewCount }} baris terisi otomatis dari riwayat pemakaian & stok. Sesuaikan bila perlu.</p>
                     @endif
                 </div>
 
                 <div class="grid gap-4 px-5 py-5 sm:grid-cols-2 lg:grid-cols-4">
+                    @if (! $isEdit && ($isSuperAdmin ?? false))
+                        <div>
+                            <label for="fasilitas_id" class="form-label">Fasilitas kesehatan *</label>
+                            <select id="fasilitas_id" name="fasilitas_id" class="form-input" onchange="window.location='{{ route('rko.create') }}?fasilitas_id='+this.value" required>
+                                <option value="">— Pilih faskes —</option>
+                                @foreach ($faskesList as $f)
+                                    <option value="{{ $f->id }}" @selected((string) old('fasilitas_id', $selectedFaskesId ?? '') === (string) $f->id)>{{ $f->nama }}</option>
+                                @endforeach
+                            </select>
+                            @error('fasilitas_id')<p class="form-error">{{ $message }}</p>@enderror
+                        </div>
+                    @endif
                     <div>
                         <label for="tanggal_pembuatan" class="form-label">Tanggal pembuatan *</label>
                         <input id="tanggal_pembuatan" name="tanggal_pembuatan" type="date" value="{{ old('tanggal_pembuatan', $rko?->tanggal_pembuatan?->format('Y-m-d') ?? now()->format('Y-m-d')) }}" required class="form-input">

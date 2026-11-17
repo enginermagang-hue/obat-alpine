@@ -8,7 +8,9 @@ use App\Models\FasilitasKesehatan;
 use App\Models\LaporanRko;
 use App\Models\Obat;
 use App\Models\PengaturanLaporan;
+use App\Models\User;
 use App\Services\LaporanRkoService;
+use App\Services\NomorFormatService;
 use App\Services\NotificationService;
 use App\Support\FaskesAccess;
 use App\Support\TableMeta;
@@ -77,15 +79,30 @@ class RkoController extends Controller
         $this->authorize('create', LaporanRko::class);
 
         $user = $request->user();
-        $tahun = (int) (PengaturanLaporan::get('rko', 'periode_tahun', $user->fasilitas_kesehatan_id) ?: now()->addYear()->format('Y'));
+        $isSuperAdmin = $user->hasRole('super_admin');
 
-        $preview = $service->previewData($user->fasilitas_kesehatan_id, $tahun);
+        $selectedFaskesId = $isSuperAdmin
+            ? ($request->integer('fasilitas_id') ?: null)
+            : (filled($user->fasilitas_kesehatan_id) ? (int) $user->fasilitas_kesehatan_id : null);
+
+        if ($selectedFaskesId !== null) {
+            $tahun = (int) (PengaturanLaporan::get('rko', 'periode_tahun', $selectedFaskesId) ?: now()->addYear()->format('Y'));
+            $preview = $service->previewData($selectedFaskesId, $tahun);
+            $faskesNama = FasilitasKesehatan::whereKey($selectedFaskesId)->value('nama') ?? $user->fasilitasKesehatan?->nama;
+        } else {
+            $tahun = (int) now()->addYear()->format('Y');
+            $preview = [];
+            $faskesNama = null;
+        }
 
         return view('laporan.rko.form', [
             'rko' => null,
-            'faskesNama' => $user->fasilitasKesehatan?->nama,
+            'faskesNama' => $faskesNama,
             'tahun' => $tahun,
             'previewCount' => count($preview),
+            'selectedFaskesId' => $selectedFaskesId,
+            'isSuperAdmin' => $isSuperAdmin,
+            'faskesList' => $isSuperAdmin ? FasilitasKesehatan::orderBy('nama')->get(['id', 'nama']) : collect(),
             'oldRows' => collect($preview)->map(fn (array $b) => [
                 'obat_id' => $b['obat_id'] ?? null,
                 'obat_label' => isset($b['obat_id']) ? (Obat::whereKey($b['obat_id'])->value('nama_obat') ?? '') : '',
@@ -105,17 +122,26 @@ class RkoController extends Controller
         $data = $request->validated();
         $user = $request->user();
 
-        $tahun = $this->periodeAktif($user);
+        $faskesId = filled($user->fasilitas_kesehatan_id)
+            ? (int) $user->fasilitas_kesehatan_id
+            : (isset($data['fasilitas_id']) ? (int) $data['fasilitas_id'] : null);
 
-        if (LaporanRko::where('fasilitas_id', $user->fasilitas_kesehatan_id)->where('periode_tahun', $tahun)->exists()) {
+        if ($faskesId === null) {
+            return redirect()->back()->withInput()
+                ->withErrors(['fasilitas_id' => 'Pilih fasilitas kesehatan terlebih dahulu.']);
+        }
+
+        $tahun = $this->periodeAktif($user, $faskesId);
+
+        if (LaporanRko::where('fasilitas_id', $faskesId)->where('periode_tahun', $tahun)->exists()) {
             return redirect()->back()->withInput()
                 ->with('error', "RKO tahun {$tahun} untuk faskes ini sudah ada.");
         }
 
-        $rko = DB::transaction(function () use ($data, $user, $tahun, $service) {
+        $rko = DB::transaction(function () use ($data, $user, $tahun, $faskesId, $service) {
             $rko = LaporanRko::create([
-                'nomor_rko' => \App\Services\NomorFormatService::generate('laporan_rko', $user->fasilitas_kesehatan_id, now()->toDateString()),
-                'fasilitas_id' => $user->fasilitas_kesehatan_id,
+                'nomor_rko' => NomorFormatService::generate('laporan_rko', $faskesId, now()->toDateString()),
+                'fasilitas_id' => $faskesId,
                 'periode_tahun' => $tahun,
                 'status' => 'draft',
                 'tanggal_pembuatan' => $data['tanggal_pembuatan'],
@@ -168,6 +194,9 @@ class RkoController extends Controller
             'faskesNama' => $rko->fasilitas?->nama,
             'tahun' => $rko->periode_tahun,
             'previewCount' => 0,
+            'selectedFaskesId' => $rko->fasilitas_id,
+            'isSuperAdmin' => false,
+            'faskesList' => collect(),
             'oldRows' => $rko->details->map(fn ($d) => [
                 'obat_id' => $d->obat_id,
                 'obat_label' => $d->obat ? "{$d->obat->kode_obat} — {$d->obat->nama_obat}" : '',
@@ -279,9 +308,9 @@ class RkoController extends Controller
     /**
      * Periode tahun RKO yang dibuka admin (fallback tahun depan).
      */
-    private function periodeAktif(\App\Models\User $user): int
+    private function periodeAktif(User $user, ?int $faskesId = null): int
     {
-        $periode = PengaturanLaporan::get('rko', 'periode_tahun', $user->fasilitas_kesehatan_id);
+        $periode = PengaturanLaporan::get('rko', 'periode_tahun', $faskesId ?? $user->fasilitas_kesehatan_id);
 
         return $periode !== null && $periode !== '' ? (int) $periode : (int) now()->addYear()->format('Y');
     }
