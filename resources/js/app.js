@@ -4,6 +4,7 @@ import modal from './components/modal';
 import opnameForm from './components/docForm';
 import dataTable from './components/table';
 import transactionForm from './components/transactionForm';
+import prediksiDetail from './components/prediksiDetail';
 import chart from './directives/chart';
 import { initAll, observe } from './services/tomselect';
 
@@ -61,6 +62,7 @@ Alpine.data('modal', modal);
 Alpine.data('opnameForm', opnameForm);
 Alpine.data('dataTable', dataTable);
 Alpine.data('transactionForm', transactionForm);
+Alpine.data('prediksiDetail', prediksiDetail);
 Alpine.directive('chart', chart);
 
 window.Alpine = Alpine;

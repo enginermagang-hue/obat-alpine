@@ -58,7 +58,7 @@ return [
     [
         'label' => 'Prediksi',
         'items' => [
-            ['label' => 'Prediksi AI', 'route' => 'prediksi.index', 'icon' => 'sparkles', 'roles' => []],
+            ['label' => 'Prediksi AI', 'route' => 'prediksi.index', 'icon' => 'sparkles', 'roles' => [], 'permission' => 'view_prediksi_kebutuhan'],
         ],
     ],
     [

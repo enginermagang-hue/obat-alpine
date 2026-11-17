@@ -535,7 +535,7 @@ dilewati). Test `TutupBukuTest::test_tutup_tahun_mengunci_transaksi_lama` menang
 
 ---
 
-## 11. Fase 7 — Prediksi AI & dashboard
+## 11. Fase 7 — Prediksi AI & dashboard (✅ 17 Nov 2026)
 
 - Halaman prediksi: rekomendasi per obat, KPI akurasi, lonjakan, detail.
 - Training via `AiTrainModels` (scheduler) + status model (`aktif`, `kadaluarsa`, `gagal`, `data_belum_cukup`).
@@ -652,4 +652,5 @@ Lainnya (P2/P3) tercatat di diskusi: redistribusi antar faskes, ABC–VEN, anali
    test tabel via kontrak JSON (total 78 hijau).
 8. **Fase 4** ✅: penerimaan (6), permintaan (7), distribusi (7), pemakaian (6),
    retur (7), inspeksi (5) — total 116 hijau.
-   Lanjut Fase 7 (Prediksi AI & dashboard).
+9. **Fase 7** ✅: halaman prediksi + export ter-scope + buat permintaan + retrain queue (10),
+   unit service (3), dashboard role-aware (4) — total 162 hijau. Lanjut Fase 8 (backlog §12).

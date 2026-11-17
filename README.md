@@ -38,7 +38,7 @@ Rencana kerja lengkap & status per fase: [`plan.md`](plan.md).
 | 4 | Transaksi inti (Penerimaan, Permintaan, Distribusi, Pemakaian, Retur, Inspeksi) | ✅ |
 | 5 | Pemakaian & retur (FEFO auto-split, 3 tipe retur, inspeksi tanpa ubah stok) | ✅ |
 | 6 | Pelaporan & cut-off (LPLPO, RKO, Neraca, Tutup Buku, Alokasi Dana, Pengaturan, Cetak) | ✅ |
-| 7–8 | Prediksi AI, dashboard, backlog | ⏳ |
+| 7–8 | Prediksi AI, dashboard, backlog | ✅ Fase 7 (prediksi + dashboard role-aware + retrain queue) |
 
 Data dummy saat ini: 12 bulan (Des 2025 – Nov 2026), 18.926 pemakaian, 4.419 batch,
 72 distribusi, 72 permintaan, 72 LPLPO, 6 RKO, dan 318 model AI terlatih.
@@ -97,7 +97,7 @@ Buka `http://127.0.0.1:8000`.
 ## Perintah harian
 
 ```powershell
-php artisan test                  # 147 test (SQLite :memory:) — tabel diuji via kontrak JSON
+php artisan test                  # 162 test (SQLite :memory:) — tabel diuji via kontrak JSON
 vendor\bin\pint                  # format kode
 php artisan migrate:fresh --seed  # reset DB dev (aman, tanpa data produksi)
 
@@ -258,13 +258,19 @@ routes/console.php                  # scheduler
    Perbaikan penting: `StokService`/`NeracaTahunanService` wajib inject
    `TutupBukuService` (sebelumnya nullable → proteksi tanggal diam-diam dilewati).
 
+6. **Fase 7 — Prediksi AI & dashboard (✅, 162 test)**:
+   Prediksi (`PrediksiController` + `CetakPrediksiExcelController` ter-scope + `prediksiDetail.js`,
+   export Excel, buat draft permintaan, retrain via `TrainPrediksiModelJob`),
+   dashboard role-aware (`DashboardService`: dinas vs faskes + insight AI),
+   factory `ModelPrediksi`/`PrediksiKebutuhan`, memoize `rows()`.
+
 ## TODO tersisa
 
 1. `PanduanController` + view panduan belum dibawa (butuh konten Markdown dari project lama).
 2. Notifikasi database (`AppNotification`) sudah tersimpan, tapi belum ada halaman inbox/bell.
 3. Tambah test fitur per modul; pertimbangkan konversi ke Pest (§5.1 `plan.md`).
 4. i18n: pesan validasi masih Inggris (belum ada file `lang/id`); tanggal sudah Indonesia via Carbon.
-5. Fase 7–8: Prediksi AI & dashboard, lalu backlog (`plan.md` §11–12).
+5. Fase 8: backlog (`plan.md` §12).
 
 Detail keputusan & risiko ada di [`plan.md`](plan.md) §13 dan §15.
 

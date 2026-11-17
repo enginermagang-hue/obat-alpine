@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\PrediksiRekomendasiService;
+use App\Support\FaskesAccess;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -15,15 +16,37 @@ class CetakPrediksiExcelController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $horizon = max(1, (int) $request->query('horizon', 3));
+        abort_unless($request->user()->can('view_prediksi_kebutuhan'), 403);
+
+        $filters = $request->validate([
+            'fasilitas_id' => ['nullable', 'integer', 'exists:fasilitas_kesehatan,id'],
+            'kategori' => ['nullable', 'string', 'max:100'],
+            'cari' => ['nullable', 'string', 'max:100'],
+            'bulan' => ['nullable', 'integer', 'min:1', 'max:12'],
+            'tahun' => ['nullable', 'integer', 'min:2000', 'max:2100'],
+            'horizon' => ['nullable', 'integer', 'min:1', 'max:12'],
+        ]);
+        $user = $request->user();
+        $fasilitasId = $filters['fasilitas_id'] ?? null ? (int) $filters['fasilitas_id'] : null;
+        if (filled($user->fasilitas_kesehatan_id)) {
+            $visible = FaskesAccess::visibleFasilitasIds($user);
+            if ($fasilitasId !== null) {
+                abort_unless(in_array($fasilitasId, $visible, true), 403);
+            } else {
+                $fasilitasId = count($visible) === 1 ? $visible[0] : null;
+            }
+        }
+
+        $horizon = max(1, (int) ($filters['horizon'] ?? 3));
 
         $rows = (new PrediksiRekomendasiService(
-            fasilitasId: $request->query('fasilitas_id') ? (int) $request->query('fasilitas_id') : null,
-            bulan: (int) $request->query('bulan', now()->month),
-            tahun: (int) $request->query('tahun', now()->year),
+            fasilitasId: $fasilitasId,
+            bulan: (int) ($filters['bulan'] ?? now()->month),
+            tahun: (int) ($filters['tahun'] ?? now()->year),
             horizon: $horizon,
-            kategori: $request->query('kategori') ?: null,
-            cari: $request->query('cari') ?: null,
+            kategori: $filters['kategori'] ?? null,
+            cari: $filters['cari'] ?? null,
+            visibleFasilitasIds: $fasilitasId === null && filled($user->fasilitas_kesehatan_id) ? $visible ?? null : null,
         ))->rows();
 
         $spreadsheet = new Spreadsheet;
@@ -91,6 +114,6 @@ class CetakPrediksiExcelController extends Controller
 
         return response()->streamDownload(function () use ($writer): void {
             $writer->save('php://output');
-        }, $filename);
+        }, $filename, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
     }
 }

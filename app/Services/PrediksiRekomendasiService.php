@@ -29,6 +29,8 @@ class PrediksiRekomendasiService
      */
     private const REKOM_HARD_CAP = 5_000_000;
 
+    private ?array $rowsCache = null;
+
     /**
      * @param  int[]|null  $visibleFasilitasIds
      */
@@ -71,6 +73,9 @@ class PrediksiRekomendasiService
      */
     public function rows(): array
     {
+        if ($this->rowsCache !== null) {
+            return $this->rowsCache;
+        }
         $periods = $this->periods();
 
         $prediksiQuery = PrediksiKebutuhan::query()
@@ -164,7 +169,7 @@ class PrediksiRekomendasiService
             ];
         }
 
-        return $rows->sortByDesc('spike_pct')->values()->all();
+        return $this->rowsCache = $rows->sortByDesc('spike_pct')->values()->all();
     }
 
     /**
